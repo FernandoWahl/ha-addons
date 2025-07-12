@@ -1,0 +1,16 @@
+configuration:
+  max_images:
+    name: Máximo de imagens
+    description: Número máximo de imagens que podem ser combinadas (1-4)
+  image_quality:
+    name: Qualidade da imagem
+    description: Qualidade JPEG da imagem final (50-100)
+  cell_width:
+    name: Largura da célula
+    description: Largura de cada célula da grade em pixels
+  cell_height:
+    name: Altura da célula
+    description: Altura de cada célula da grade em pixels
+  timeout:
+    name: Timeout
+    description: Tempo limite para download de cada imagem em segundos

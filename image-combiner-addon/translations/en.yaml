@@ -1,0 +1,16 @@
+configuration:
+  max_images:
+    name: Maximum images
+    description: Maximum number of images that can be combined (1-4)
+  image_quality:
+    name: Image quality
+    description: JPEG quality of the final image (50-100)
+  cell_width:
+    name: Cell width
+    description: Width of each grid cell in pixels
+  cell_height:
+    name: Cell height
+    description: Height of each grid cell in pixels
+  timeout:
+    name: Timeout
+    description: Timeout for downloading each image in seconds

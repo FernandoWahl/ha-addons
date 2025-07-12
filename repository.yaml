@@ -1,0 +1,4 @@
+# Repository configuration for Home Assistant Add-on Store
+name: "Fernando Wahl HA Add-ons"
+url: "https://github.com/FernandoWahl/image-combiner-addon"
+maintainer: "Fernando Wahl <me@fwahl.me>"
