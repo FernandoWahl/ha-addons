@@ -181,4 +181,25 @@ def home():
     })
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    import logging
+    import os
+    
+    # Suprimir avisos do Werkzeug (servidor Flask de desenvolvimento)
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
+    
+    # Log startup information
+    print(f"🚀 Starting Image Combiner API")
+    print(f"📊 Configuration:")
+    print(f"   - Max images: {combiner.max_images}")
+    print(f"   - Image quality: {combiner.image_quality}")
+    print(f"   - Cell dimensions: {combiner.cell_width}x{combiner.cell_height}")
+    print(f"   - Timeout: {combiner.timeout}s")
+    print(f"🌐 Server starting on http://0.0.0.0:5000")
+    
+    # Detecta se está rodando no Home Assistant
+    is_addon = os.getenv('HASSIO_TOKEN') is not None
+    if is_addon:
+        print("🏠 Running as Home Assistant Addon")
+    
+    app.run(debug=False, host='0.0.0.0', port=5000, use_reloader=False)
