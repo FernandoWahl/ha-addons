@@ -167,7 +167,7 @@ def test_api_info():
 
 def main():
     """Função principal"""
-    print("🚀 Teste das funcionalidades de chave única - Image Combiner v1.2.0")
+    print("🚀 Teste das funcionalidades de chave única - Image Combiner v1.1.0")
     print("Certifique-se de que:")
     print("1. O servidor está rodando: python app.py")
     print("2. Redis está disponível (ou cache desabilitado)")
