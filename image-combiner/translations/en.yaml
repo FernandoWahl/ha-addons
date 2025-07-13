@@ -14,3 +14,18 @@ configuration:
   timeout:
     name: Timeout
     description: Timeout for downloading each image in seconds
+  redis_host:
+    name: Redis Host
+    description: Redis server address for caching
+  redis_port:
+    name: Redis Port
+    description: Redis server port
+  redis_password:
+    name: Redis Password
+    description: Redis password (leave empty if none)
+  cache_ttl:
+    name: Cache TTL
+    description: Cache time-to-live in seconds (600 = 10 minutes)
+  enable_cache:
+    name: Enable Cache
+    description: Enable Redis caching for better performance

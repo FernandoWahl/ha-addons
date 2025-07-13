@@ -14,3 +14,18 @@ configuration:
   timeout:
     name: Timeout
     description: Tempo limite para download de cada imagem em segundos
+  redis_host:
+    name: Host do Redis
+    description: Endereço do servidor Redis para cache
+  redis_port:
+    name: Porta do Redis
+    description: Porta do servidor Redis
+  redis_password:
+    name: Senha do Redis
+    description: Senha do Redis (deixe vazio se não houver)
+  cache_ttl:
+    name: TTL do Cache
+    description: Tempo de vida do cache em segundos (600 = 10 minutos)
+  enable_cache:
+    name: Habilitar Cache
+    description: Ativa o cache Redis para melhor performance

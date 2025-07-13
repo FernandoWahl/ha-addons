@@ -1,6 +1,6 @@
 # Image Combiner Home Assistant Addon
 
-Este addon fornece uma API HTTP que combina até 4 imagens em uma única imagem composta, diretamente no seu Home Assistant.
+Este addon fornece uma API HTTP que combina até 4 imagens em uma única imagem composta, com cache Redis para melhor performance.
 
 ## Instalação
 
@@ -13,11 +13,19 @@ Este addon fornece uma API HTTP que combina até 4 imagens em uma única imagem 
 
 ### Opções disponíveis:
 
+#### Configurações de Imagem:
 - **max_images** (1-4): Número máximo de imagens que podem ser combinadas
 - **image_quality** (50-100): Qualidade JPEG da imagem final
 - **cell_width** (200-800): Largura de cada célula da grade em pixels
 - **cell_height** (200-600): Altura de cada célula da grade em pixels
 - **timeout** (5-30): Tempo limite para download de cada imagem em segundos
+
+#### Configurações de Cache Redis:
+- **redis_host**: Endereço do servidor Redis (padrão: localhost)
+- **redis_port** (1-65535): Porta do servidor Redis (padrão: 6379)
+- **redis_password**: Senha do Redis (opcional)
+- **cache_ttl** (60-3600): Tempo de vida do cache em segundos (padrão: 600)
+- **enable_cache**: Habilita/desabilita o cache Redis (padrão: true)
 
 ### Configuração padrão:
 ```yaml
@@ -26,14 +34,33 @@ image_quality: 85
 cell_width: 400
 cell_height: 300
 timeout: 10
+redis_host: "localhost"
+redis_port: 6379
+redis_password: ""
+cache_ttl: 600
+enable_cache: true
 ```
+
+## Funcionalidades do Cache
+
+### Como funciona:
+1. **Chave única**: Cada combinação de URLs + configurações gera uma chave MD5 única
+2. **Compressão gzip**: Imagens são comprimidas antes de serem armazenadas
+3. **TTL automático**: Cache expira automaticamente após o tempo configurado
+4. **Fallback gracioso**: Se Redis não estiver disponível, funciona sem cache
+
+### Benefícios:
+- ✅ **Performance**: Imagens idênticas são servidas instantaneamente do cache
+- ✅ **Economia de banda**: Reduz downloads desnecessários
+- ✅ **Compressão**: Economiza espaço no Redis (até 70% de redução)
+- ✅ **Configurável**: TTL e configurações ajustáveis
 
 ## Uso
 
 ### Endpoints disponíveis:
 
 #### POST /combine
-Combina imagens em uma única imagem.
+Combina imagens em uma única imagem (com cache automático).
 
 **URL:** `http://homeassistant.local:5000/combine`
 
@@ -49,8 +76,33 @@ Combina imagens em uma única imagem.
 
 **Response:** Imagem JPEG combinada
 
+#### GET /cache/stats
+Retorna estatísticas do cache Redis.
+
+**Response:**
+```json
+{
+  "enabled": true,
+  "total_keys": 15,
+  "memory_used": "2.1M",
+  "connected_clients": 1,
+  "ttl_seconds": 600
+}
+```
+
+#### POST /cache/clear
+Limpa todas as imagens do cache.
+
+**Response:**
+```json
+{
+  "message": "15 chaves removidas do cache",
+  "deleted_keys": 15
+}
+```
+
 #### GET /health
-Health check do serviço.
+Health check do serviço com informações de cache.
 
 #### GET /
 Informações da API e configuração atual.
@@ -101,11 +153,47 @@ O sistema organiza as imagens automaticamente:
 - **3 imagens**: Layout em grade 2x2 (com uma posição vazia)
 - **4 imagens**: Layout em grade 2x2
 
+## Configuração do Redis
+
+### Redis local (recomendado):
+```yaml
+redis_host: "localhost"
+redis_port: 6379
+redis_password: ""
+enable_cache: true
+```
+
+### Redis externo:
+```yaml
+redis_host: "192.168.1.100"
+redis_port: 6379
+redis_password: "sua_senha_aqui"
+enable_cache: true
+```
+
+### Desabilitar cache:
+```yaml
+enable_cache: false
+```
+
+## Monitoramento
+
+### Logs do cache:
+```
+✅ Redis connected: localhost:6379
+🎯 Cache HIT: a1b2c3d4e5f6...
+💾 Cache STORED: a1b2c3d4e5f6...
+📊 Compression: 45678 → 15234 bytes (66.7% saved)
+```
+
+### Estatísticas via API:
+```bash
+curl http://homeassistant.local:5000/cache/stats
+```
+
 ## Integração com Home Assistant
 
 ### Camera Entity
-Você pode criar uma camera entity que usa o serviço:
-
 ```yaml
 # configuration.yaml
 camera:
@@ -120,23 +208,33 @@ camera:
 # configuration.yaml
 sensor:
   - platform: rest
-    name: "Image Combiner Status"
-    resource: "http://localhost:5000/health"
-    value_template: "{{ value_json.status }}"
+    name: "Image Combiner Cache"
+    resource: "http://localhost:5000/cache/stats"
+    value_template: "{{ value_json.total_keys }}"
     json_attributes:
-      - config
+      - enabled
+      - memory_used
+      - ttl_seconds
 ```
 
-## Logs e troubleshooting
+## Troubleshooting
 
-Os logs do addon podem ser visualizados na interface do Home Assistant em:
-**Supervisor → Image Combiner → Logs**
+### Cache não funciona:
+1. Verifique se Redis está rodando
+2. Confirme host/porta/senha do Redis
+3. Verifique logs do addon
+4. Teste conectividade: `redis-cli ping`
+
+### Performance:
+1. Ajuste `cache_ttl` conforme necessário
+2. Monitore uso de memória do Redis
+3. Use `POST /cache/clear` se necessário
 
 ### Problemas comuns:
-
-1. **Timeout de download**: Aumente o valor de `timeout` na configuração
+1. **Timeout de download**: Aumente o valor de `timeout`
 2. **Imagens muito grandes**: Ajuste `cell_width` e `cell_height`
 3. **Qualidade baixa**: Aumente o valor de `image_quality`
+4. **Cache cheio**: Reduza `cache_ttl` ou limpe o cache
 
 ## Limitações
 
@@ -144,10 +242,11 @@ Os logs do addon podem ser visualizados na interface do Home Assistant em:
 - URLs devem retornar imagens válidas
 - Suporte a formatos: JPEG, PNG, GIF, BMP, etc.
 - Conversão automática para RGB
+- Cache requer Redis disponível
 
 ## Segurança
 
 - O addon roda em modo não privilegiado
-- Não requer acesso à rede host
-- Todas as configurações são validadas
-- Timeout configurável para evitar travamentos
+- Cache usa chaves MD5 para privacidade
+- Senhas Redis são opcionais
+- TTL automático previne acúmulo de dados

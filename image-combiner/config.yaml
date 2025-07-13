@@ -1,7 +1,7 @@
 name: Image Combiner
-version: "1.0.0"
+version: "1.1.0"
 slug: image_combiner
-description: API service to combine up to 4 images into a single composite image
+description: API service to combine up to 4 images into a single composite image with Redis caching
 url: https://github.com/FernandoWahl/image-combiner-addon
 arch:
   - armhf
@@ -25,9 +25,19 @@ options:
   cell_width: 400
   cell_height: 300
   timeout: 10
+  redis_host: "localhost"
+  redis_port: 6379
+  redis_password: ""
+  cache_ttl: 600
+  enable_cache: true
 schema:
   max_images: int(1,4)
   image_quality: int(50,100)
   cell_width: int(200,800)
   cell_height: int(200,600)
   timeout: int(5,30)
+  redis_host: str
+  redis_port: int(1,65535)
+  redis_password: str?
+  cache_ttl: int(60,3600)
+  enable_cache: bool
