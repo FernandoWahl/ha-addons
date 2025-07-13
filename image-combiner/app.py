@@ -68,10 +68,10 @@ class RedisCache:
             print(f"⚠️ Cache get error: {e}")
             return None
     
-    def cache_image(self, urls: List[str], config: dict, image_data: bytes) -> bool:
-        """Armazena imagem no cache com compressão"""
+    def cache_image(self, urls: List[str], config: dict, image_data: bytes) -> Optional[str]:
+        """Armazena imagem no cache com compressão e retorna a chave"""
         if not self.enabled:
-            return False
+            return None
             
         try:
             key = self._generate_key(urls, config)
@@ -90,10 +90,53 @@ class RedisCache:
             print(f"💾 Cache STORED: {key[:16]}...")
             print(f"📊 Compression: {original_size} → {compressed_size} bytes ({compression_ratio:.1f}% saved)")
             
-            return True
+            return key
             
         except Exception as e:
             print(f"⚠️ Cache store error: {e}")
+            return None
+    
+    def get_image_by_key(self, key: str) -> Optional[bytes]:
+        """Recupera imagem do cache usando chave específica"""
+        if not self.enabled:
+            return None
+            
+        try:
+            compressed_data = self.redis_client.get(key)
+            
+            if compressed_data:
+                # Descomprime os dados
+                image_data = gzip.decompress(compressed_data)
+                print(f"🔑 Image retrieved by key: {key[:16]}...")
+                return image_data
+            else:
+                print(f"🔍 Key not found: {key[:16]}...")
+                return None
+                
+        except Exception as e:
+            print(f"⚠️ Key retrieval error: {e}")
+            return None
+    
+    def store_image_with_custom_key(self, custom_key: str, image_data: bytes) -> bool:
+        """Armazena imagem com chave personalizada"""
+        if not self.enabled:
+            return False
+            
+        try:
+            full_key = f"image_combiner:{custom_key}"
+            
+            # Comprime os dados da imagem
+            compressed_data = gzip.compress(image_data, compresslevel=6)
+            
+            # Armazena no Redis com TTL
+            self.redis_client.setex(full_key, self.ttl, compressed_data)
+            
+            print(f"💾 Custom key stored: {custom_key}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"⚠️ Custom key store error: {e}")
             return False
     
     def get_cache_stats(self) -> dict:
@@ -174,8 +217,8 @@ class ImageCombiner:
         
         return image.resize((new_width, new_height), Image.Resampling.LANCZOS)
     
-    def combine_images(self, image_urls: List[str]) -> bytes:
-        """Combina as imagens em uma única imagem e retorna os bytes"""
+    def combine_images(self, image_urls: List[str]) -> tuple[bytes, Optional[str]]:
+        """Combina as imagens em uma única imagem e retorna os bytes e chave do cache"""
         if not image_urls:
             raise ValueError("Lista de URLs não pode estar vazia")
         
@@ -186,7 +229,9 @@ class ImageCombiner:
         config = self.get_config_dict()
         cached_image = self.cache.get_cached_image(image_urls, config)
         if cached_image:
-            return cached_image
+            # Se encontrou no cache, retorna a chave também
+            cache_key = self.cache._generate_key(image_urls, config)
+            return cached_image, cache_key
         
         # Baixa todas as imagens
         images = []
@@ -239,17 +284,52 @@ class ImageCombiner:
         combined_image.save(img_buffer, format='JPEG', quality=self.image_quality)
         image_data = img_buffer.getvalue()
         
-        # Armazena no cache
-        self.cache.cache_image(image_urls, config, image_data)
+        # Armazena no cache e obtém a chave
+        cache_key = self.cache.cache_image(image_urls, config, image_data)
         
-        return image_data
+        return image_data, cache_key
 
 # Instância do combinador de imagens
 combiner = ImageCombiner()
 
+@app.route('/image/<key>', methods=['GET'])
+def get_image_by_key(key: str):
+    """Endpoint para recuperar imagem usando chave única"""
+    try:
+        # Valida a chave
+        if not key:
+            return jsonify({'error': 'Chave não pode estar vazia'}), 400
+        
+        # Adiciona prefixo se necessário
+        if not key.startswith('image_combiner:'):
+            full_key = f'image_combiner:{key}'
+        else:
+            full_key = key
+        
+        # Recupera a imagem do cache
+        image_data = combiner.cache.get_image_by_key(full_key)
+        
+        if image_data:
+            # Retorna a imagem
+            return send_file(
+                io.BytesIO(image_data),
+                mimetype='image/jpeg',
+                as_attachment=False,
+                download_name=f'combined_image_{key[:8]}.jpg'
+            )
+        else:
+            return jsonify({
+                'error': 'Imagem não encontrada ou expirada',
+                'key': key,
+                'message': 'A chave pode ter expirado ou não existir'
+            }), 404
+            
+    except Exception as e:
+        return jsonify({'error': f'Erro ao recuperar imagem: {str(e)}'}), 500
+
 @app.route('/combine', methods=['POST'])
 def combine_images():
-    """Endpoint para combinar imagens"""
+    """Endpoint para combinar imagens - retorna chave única"""
     try:
         # Verifica se o JSON foi enviado
         if not request.is_json:
@@ -276,15 +356,23 @@ def combine_images():
             return jsonify({'error': f'Máximo de {combiner.max_images} URLs permitidas'}), 400
         
         # Combina as imagens (com cache automático)
-        image_data = combiner.combine_images(urls)
+        image_data, cache_key = combiner.combine_images(urls)
         
-        # Retorna a imagem
-        return send_file(
-            io.BytesIO(image_data),
-            mimetype='image/jpeg',
-            as_attachment=False,
-            download_name='combined_image.jpg'
-        )
+        # Calcula informações da imagem
+        image_size = len(image_data)
+        
+        # Retorna JSON com a chave e informações
+        response_data = {
+            'success': True,
+            'key': cache_key,
+            'image_size': image_size,
+            'urls_count': len(urls),
+            'cached': cache_key is not None,
+            'retrieve_url': f'/image/{cache_key}' if cache_key else None,
+            'message': 'Imagem combinada com sucesso'
+        }
+        
+        return jsonify(response_data)
         
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
@@ -326,14 +414,15 @@ def health_check():
     return jsonify({
         'status': 'healthy', 
         'service': 'Image Combiner',
-        'version': '1.1.0',
+        'version': '1.2.0',
         'config': {
             'max_images': combiner.max_images,
             'image_quality': combiner.image_quality,
             'cell_dimensions': f'{combiner.cell_width}x{combiner.cell_height}',
             'timeout': combiner.timeout
         },
-        'cache': cache_stats
+        'cache': cache_stats,
+        'features': ['key_based_retrieval', 'redis_cache', 'gzip_compression']
     })
 
 @app.route('/', methods=['GET'])
@@ -341,9 +430,9 @@ def home():
     """Endpoint de informações da API"""
     return jsonify({
         'service': 'Image Combiner API',
-        'version': '1.1.0',
+        'version': '1.2.0',
         'home_assistant_addon': True,
-        'features': ['image_combination', 'redis_cache', 'compression'],
+        'features': ['image_combination', 'redis_cache', 'compression', 'key_based_retrieval'],
         'config': {
             'max_images': combiner.max_images,
             'image_quality': combiner.image_quality,
@@ -354,20 +443,36 @@ def home():
             'cache_ttl': combiner.cache.ttl if combiner.cache.enabled else None
         },
         'endpoints': {
-            'POST /combine': 'Combina até 4 imagens em uma única imagem (com cache)',
+            'POST /combine': 'Combina imagens e retorna chave única (JSON response)',
+            'GET /image/<key>': 'Recupera imagem usando chave única',
             'GET /cache/stats': 'Estatísticas do cache Redis',
             'POST /cache/clear': 'Limpa o cache Redis',
             'GET /health': 'Health check do serviço',
             'GET /': 'Informações da API'
         },
         'usage': {
-            'method': 'POST',
-            'url': '/combine',
-            'content_type': 'application/json',
-            'body': {
-                'urls': ['url1', 'url2', 'url3', 'url4']
+            'combine': {
+                'method': 'POST',
+                'url': '/combine',
+                'content_type': 'application/json',
+                'body': {
+                    'urls': ['url1', 'url2', 'url3', 'url4']
+                },
+                'response': {
+                    'success': True,
+                    'key': 'image_combiner:abc123...',
+                    'image_size': 45678,
+                    'urls_count': 2,
+                    'cached': True,
+                    'retrieve_url': '/image/abc123...',
+                    'message': 'Imagem combinada com sucesso'
+                }
             },
-            'response': 'Imagem JPEG combinada (possivelmente do cache)'
+            'retrieve': {
+                'method': 'GET',
+                'url': '/image/{key}',
+                'response': 'Imagem JPEG combinada'
+            }
         }
     })
 
@@ -380,7 +485,7 @@ if __name__ == '__main__':
     log.setLevel(logging.ERROR)
     
     # Log startup information
-    print(f"🚀 Starting Image Combiner API v1.1.0")
+    print(f"🚀 Starting Image Combiner API v1.2.0")
     print(f"📊 Configuration:")
     print(f"   - Max images: {combiner.max_images}")
     print(f"   - Image quality: {combiner.image_quality}")
@@ -390,6 +495,9 @@ if __name__ == '__main__':
     if combiner.cache.enabled:
         print(f"   - TTL: {combiner.cache.ttl}s")
         print(f"   - Compression: gzip level 6")
+    print(f"🔑 New Features:")
+    print(f"   - Key-based image retrieval")
+    print(f"   - JSON response with unique keys")
     print(f"🌐 Server starting on http://0.0.0.0:5000")
     
     # Detecta se está rodando no Home Assistant

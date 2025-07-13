@@ -1,7 +1,7 @@
 name: Image Combiner
-version: "1.1.0"
+version: "1.2.0"
 slug: image_combiner
-description: API service to combine up to 4 images into a single composite image with Redis caching
+description: API service to combine up to 4 images with key-based retrieval and Redis caching
 url: https://github.com/FernandoWahl/image-combiner-addon
 arch:
   - armhf
