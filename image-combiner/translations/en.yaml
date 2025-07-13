@@ -29,3 +29,6 @@ configuration:
   enable_cache:
     name: Enable Cache
     description: Enable Redis caching for better performance
+  redis_required:
+    name: Redis Required
+    description: If true, app won't start without Redis. If false, works without cache.

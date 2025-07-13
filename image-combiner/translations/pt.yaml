@@ -29,3 +29,6 @@ configuration:
   enable_cache:
     name: Habilitar Cache
     description: Ativa o cache Redis para melhor performance
+  redis_required:
+    name: Redis Obrigatório
+    description: Se true, aplicação não inicia sem Redis. Se false, funciona sem cache.

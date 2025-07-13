@@ -13,10 +13,11 @@ from redis.exceptions import ConnectionError as RedisConnectionError
 app = Flask(__name__)
 
 class RedisCache:
-    def __init__(self, host: str, port: int, password: str = None, ttl: int = 600):
+    def __init__(self, host: str, port: int, password: str = None, ttl: int = 600, required: bool = True):
         """Inicializa conexão com Redis"""
         self.ttl = ttl
         self.enabled = True
+        self.required = required
         
         try:
             self.redis_client = redis.Redis(
@@ -31,10 +32,20 @@ class RedisCache:
             self.redis_client.ping()
             print(f"✅ Redis connected: {host}:{port}")
         except (RedisConnectionError, Exception) as e:
-            print(f"⚠️ Redis connection failed: {e}")
-            print("📝 Cache disabled - images will not be cached")
-            self.enabled = False
-            self.redis_client = None
+            if self.required:
+                print(f"❌ Redis connection FAILED: {e}")
+                print(f"🚫 Cache is required but Redis is not available at {host}:{port}")
+                print(f"💡 Please check:")
+                print(f"   - Redis server is running")
+                print(f"   - Host/port are correct: {host}:{port}")
+                print(f"   - Password is correct (if required)")
+                print(f"   - Network connectivity")
+                raise SystemExit(f"FATAL: Cannot connect to required Redis server at {host}:{port}")
+            else:
+                print(f"⚠️ Redis connection failed: {e}")
+                print("📝 Cache disabled - images will not be cached")
+                self.enabled = False
+                self.redis_client = None
     
     def _generate_key(self, urls: List[str], config: dict) -> str:
         """Gera uma chave única baseada nas URLs e configurações"""
@@ -173,13 +184,16 @@ class ImageCombiner:
         redis_password = os.getenv('REDIS_PASSWORD', '')
         cache_ttl = int(os.getenv('CACHE_TTL', 600))
         enable_cache = os.getenv('ENABLE_CACHE', 'true').lower() == 'true'
+        redis_required = os.getenv('REDIS_REQUIRED', 'true').lower() == 'true'
         
         # Initialize Redis cache
         if enable_cache:
-            self.cache = RedisCache(redis_host, redis_port, redis_password, cache_ttl)
+            # Redis é obrigatório ou opcional baseado na configuração
+            self.cache = RedisCache(redis_host, redis_port, redis_password, cache_ttl, required=redis_required)
         else:
             print("📝 Cache disabled by configuration")
-            self.cache = RedisCache("", 0)  # Disabled cache
+            # Quando cache está desabilitado, Redis não é obrigatório
+            self.cache = RedisCache("", 0, required=False)
             self.cache.enabled = False
     
     def get_config_dict(self) -> dict:

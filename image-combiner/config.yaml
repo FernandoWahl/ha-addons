@@ -30,6 +30,7 @@ options:
   redis_password: ""
   cache_ttl: 600
   enable_cache: true
+  redis_required: true
 schema:
   max_images: int(1,4)
   image_quality: int(50,100)
@@ -41,3 +42,4 @@ schema:
   redis_password: str?
   cache_ttl: int(60,3600)
   enable_cache: bool
+  redis_required: bool
