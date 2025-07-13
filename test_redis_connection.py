@@ -149,7 +149,7 @@ def simulate_app_config_loading():
 
 def main():
     """Função principal"""
-    print("🚀 Diagnóstico de Conexão Redis - Image Combiner v1.1.1")
+    print("🚀 Diagnóstico de Conexão Redis - Image Combiner v1.1.2")
     print("Este script ajuda a diagnosticar problemas de conexão Redis")
     print()
     
@@ -164,16 +164,16 @@ def main():
     if not redis_host or redis_host in ['', 'localhost', '127.0.0.1']:
         print(f"❌ PROBLEMA ENCONTRADO: redis_host está vazio ou localhost")
         print(f"   Valor atual: '{redis_host}'")
-        print(f"   Esperado: '192.168.68.120'")
+        print(f"   Configure o IP correto do seu servidor Redis")
     
     if redis_port == 0 or not redis_port:
         print(f"❌ PROBLEMA ENCONTRADO: redis_port está 0 ou vazio")
         print(f"   Valor atual: {redis_port}")
         print(f"   Esperado: 6379")
     
-    # 4. Testa com valores corretos
-    print(f"\n🧪 Testando com valores corretos...")
-    test_redis_connection('192.168.68.120', 6379)
+    # 4. Testa com valores corretos (exemplo)
+    print(f"\n🧪 Testando com valores de exemplo...")
+    test_redis_connection('redis-server', 6379)
     
     # 5. Testa com valores da configuração atual
     if redis_host and redis_port:
@@ -181,11 +181,11 @@ def main():
         test_redis_connection(redis_host, redis_port, redis_password)
     
     print(f"\n💡 SOLUÇÕES SUGERIDAS:")
-    print(f"1. Verifique se redis_host está configurado como '192.168.68.120'")
+    print(f"1. Verifique se redis_host está configurado corretamente")
     print(f"2. Verifique se redis_port está configurado como 6379")
     print(f"3. Reinicie o addon após alterar as configurações")
-    print(f"4. Verifique se o Redis está rodando em 192.168.68.120:6379")
-    print(f"5. Teste conectividade: telnet 192.168.68.120 6379")
+    print(f"4. Verifique se o Redis está rodando no host/porta configurados")
+    print(f"5. Teste conectividade: telnet <redis_host> 6379")
 
 if __name__ == "__main__":
     main()

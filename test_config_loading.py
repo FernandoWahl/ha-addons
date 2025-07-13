@@ -128,7 +128,7 @@ def check_server_status():
 
 def main():
     """Função principal"""
-    print("🧪 Teste de Leitura de Configurações - Image Combiner v1.1.1")
+    print("🧪 Teste de Leitura de Configurações - Image Combiner v1.1.2")
     print("=" * 60)
     
     # Verifica se servidor está rodando

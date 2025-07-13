@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.2] - 2025-01-13
+
+### 🧹 Code Cleanup
+- Removed hardcoded IP addresses from diagnostic scripts
+- Made test scripts more generic and reusable
+- Enhanced Redis connection diagnostics with flexible host testing
+- Improved configuration validation and error messages
+
+### 🔧 Improvements
+- Better Redis host validation in configuration loading
+- Enhanced logging for configuration debugging
+- More comprehensive test coverage for different Redis configurations
+- Generic examples in diagnostic tools
+
+### 🧪 Testing
+- Updated all test scripts to version 1.1.2
+- Improved test_redis_connection.py with generic host examples
+- Enhanced test_ha_config.py with flexible configuration testing
+
 ## [1.1.1] - 2025-01-13
 
 ### 🔧 Fixed

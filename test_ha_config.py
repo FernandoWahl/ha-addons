@@ -11,7 +11,7 @@ import subprocess
 import sys
 import time
 
-def create_ha_config(redis_host="192.168.68.120", redis_port=6379):
+def create_ha_config(redis_host="redis-server", redis_port=6379):
     """Cria configuração simulada do Home Assistant"""
     
     config = {
@@ -126,8 +126,8 @@ def test_config_variations():
     
     variations = [
         {
-            "name": "Redis IP correto",
-            "config": {"redis_host": "192.168.68.120", "redis_port": 6379}
+            "name": "Redis IP configurado",
+            "config": {"redis_host": "redis-server", "redis_port": 6379}
         },
         {
             "name": "Redis localhost",
@@ -139,7 +139,7 @@ def test_config_variations():
         },
         {
             "name": "Redis porta inválida",
-            "config": {"redis_host": "192.168.68.120", "redis_port": 0}
+            "config": {"redis_host": "redis-server", "redis_port": 0}
         }
     ]
     
@@ -176,8 +176,8 @@ def test_config_variations():
         print(f"   - Host final: '{redis_host}'")
         print(f"   - Port final: {redis_port}")
         
-        # Testa conexão se for um endereço válido
-        if redis_host == "192.168.68.120":
+        # Testa conexão se for um endereço válido (não localhost)
+        if redis_host not in ["localhost", "127.0.0.1", ""]:
             try:
                 import redis
                 r = redis.Redis(host=redis_host, port=redis_port, socket_connect_timeout=2)
@@ -188,7 +188,7 @@ def test_config_variations():
 
 def main():
     """Função principal"""
-    print("🚀 Teste de Configuração Home Assistant - Image Combiner v1.1.1")
+    print("🚀 Teste de Configuração Home Assistant - Image Combiner v1.1.2")
     print("Este script testa como a aplicação carrega configurações do HA")
     print()
     
@@ -200,7 +200,7 @@ def main():
     
     print("\n✨ Testes concluídos!")
     print("\n💡 PRÓXIMOS PASSOS:")
-    print("1. Verifique se redis_host está configurado como '192.168.68.120' no HA")
+    print("1. Verifique se redis_host está configurado com o IP correto no HA")
     print("2. Verifique se redis_port está configurado como 6379 no HA")
     print("3. Reinicie o addon após alterar as configurações")
     print("4. Verifique os logs de inicialização do addon")
