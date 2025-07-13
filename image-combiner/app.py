@@ -506,7 +506,7 @@ def health_check():
     return jsonify({
         'status': 'healthy', 
         'service': 'Image Combiner',
-        'version': '1.1.0',
+        'version': '1.1.1',
         'config': {
             'max_images': combiner.max_images,
             'image_quality': combiner.image_quality,
@@ -522,7 +522,7 @@ def home():
     """Endpoint de informações da API"""
     return jsonify({
         'service': 'Image Combiner API',
-        'version': '1.1.0',
+        'version': '1.1.1',
         'home_assistant_addon': True,
         'features': ['image_combination', 'redis_cache', 'compression', 'key_based_retrieval'],
         'config': {
@@ -578,7 +578,7 @@ if __name__ == '__main__':
     log.setLevel(logging.ERROR)
     
     # Log startup information
-    print(f"🚀 Starting Image Combiner API v1.1.0")
+    print(f"🚀 Starting Image Combiner API v1.1.1")
     print(f"📊 Image Configuration:")
     print(f"   - Max images: {combiner.max_images}")
     print(f"   - Image quality: {combiner.image_quality}")

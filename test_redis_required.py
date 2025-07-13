@@ -204,7 +204,7 @@ def check_redis_status():
 
 def main():
     """Função principal"""
-    print("🚀 Teste de Redis Obrigatório - Image Combiner v1.1.0")
+    print("🚀 Teste de Redis Obrigatório - Image Combiner v1.1.1")
     print("Este teste demonstra o comportamento da aplicação com diferentes configurações de Redis")
     print()
     
