@@ -189,10 +189,23 @@ class ImageCombiner:
         enable_cache = config.get('enable_cache', True)
         redis_required = config.get('redis_required', True)
         
+        # Validação e correção de tipos
+        if not redis_host or redis_host == '':
+            redis_host = 'localhost'
+            print(f"⚠️ redis_host vazio, usando padrão: localhost")
+        
+        if not isinstance(redis_port, int) or redis_port <= 0:
+            redis_port = 6379
+            print(f"⚠️ redis_port inválido, usando padrão: 6379")
+        
+        if not isinstance(cache_ttl, int) or cache_ttl <= 0:
+            cache_ttl = 600
+            print(f"⚠️ cache_ttl inválido, usando padrão: 600")
+        
         # Log da configuração Redis para debug
         print(f"🔧 Redis Configuration:")
-        print(f"   - Host: {redis_host}")
-        print(f"   - Port: {redis_port}")
+        print(f"   - Host: '{redis_host}' (type: {type(redis_host).__name__})")
+        print(f"   - Port: {redis_port} (type: {type(redis_port).__name__})")
         print(f"   - Password: {'***' if redis_password else '(none)'}")
         print(f"   - Cache enabled: {enable_cache}")
         print(f"   - Redis required: {redis_required}")
@@ -220,13 +233,14 @@ class ImageCombiner:
                 with open(options_file, 'r') as f:
                     config = json.load(f)
                 print(f"📋 Configuration loaded from Home Assistant options")
+                print(f"🔍 Raw config: {config}")
                 return config
             except Exception as e:
                 print(f"⚠️ Error reading options file: {e}")
         
         # Fallback para variáveis de ambiente (para desenvolvimento)
         print(f"📋 Configuration loaded from environment variables")
-        return {
+        env_config = {
             'max_images': int(os.getenv('MAX_IMAGES', 4)),
             'image_quality': int(os.getenv('IMAGE_QUALITY', 85)),
             'cell_width': int(os.getenv('CELL_WIDTH', 400)),
@@ -239,6 +253,8 @@ class ImageCombiner:
             'enable_cache': os.getenv('ENABLE_CACHE', 'true').lower() == 'true',
             'redis_required': os.getenv('REDIS_REQUIRED', 'true').lower() == 'true'
         }
+        print(f"🔍 Env config: {env_config}")
+        return env_config
     
     def get_config_dict(self) -> dict:
         """Retorna configuração atual como dicionário para cache key"""
