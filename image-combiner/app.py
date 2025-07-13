@@ -171,20 +171,32 @@ class RedisCache:
 
 class ImageCombiner:
     def __init__(self):
-        # Get configuration from environment variables (set by Home Assistant)
-        self.max_images = int(os.getenv('MAX_IMAGES', 4))
-        self.image_quality = int(os.getenv('IMAGE_QUALITY', 85))
-        self.cell_width = int(os.getenv('CELL_WIDTH', 400))
-        self.cell_height = int(os.getenv('CELL_HEIGHT', 300))
-        self.timeout = int(os.getenv('TIMEOUT', 10))
+        # Lê configurações do Home Assistant ou variáveis de ambiente
+        config = self.load_config()
+        
+        # Get configuration from Home Assistant options or environment variables
+        self.max_images = config.get('max_images', 4)
+        self.image_quality = config.get('image_quality', 85)
+        self.cell_width = config.get('cell_width', 400)
+        self.cell_height = config.get('cell_height', 300)
+        self.timeout = config.get('timeout', 10)
         
         # Redis configuration
-        redis_host = os.getenv('REDIS_HOST', 'localhost')
-        redis_port = int(os.getenv('REDIS_PORT', 6379))
-        redis_password = os.getenv('REDIS_PASSWORD', '')
-        cache_ttl = int(os.getenv('CACHE_TTL', 600))
-        enable_cache = os.getenv('ENABLE_CACHE', 'true').lower() == 'true'
-        redis_required = os.getenv('REDIS_REQUIRED', 'true').lower() == 'true'
+        redis_host = config.get('redis_host', 'localhost')
+        redis_port = config.get('redis_port', 6379)
+        redis_password = config.get('redis_password', '')
+        cache_ttl = config.get('cache_ttl', 600)
+        enable_cache = config.get('enable_cache', True)
+        redis_required = config.get('redis_required', True)
+        
+        # Log da configuração Redis para debug
+        print(f"🔧 Redis Configuration:")
+        print(f"   - Host: {redis_host}")
+        print(f"   - Port: {redis_port}")
+        print(f"   - Password: {'***' if redis_password else '(none)'}")
+        print(f"   - Cache enabled: {enable_cache}")
+        print(f"   - Redis required: {redis_required}")
+        print(f"   - TTL: {cache_ttl}s")
         
         # Initialize Redis cache
         if enable_cache:
@@ -195,6 +207,38 @@ class ImageCombiner:
             # Quando cache está desabilitado, Redis não é obrigatório
             self.cache = RedisCache("", 0, required=False)
             self.cache.enabled = False
+    
+    def load_config(self) -> dict:
+        """Carrega configuração do Home Assistant ou variáveis de ambiente"""
+        import json
+        
+        # Tenta ler do arquivo de opções do Home Assistant
+        options_file = '/data/options.json'
+        
+        if os.path.exists(options_file):
+            try:
+                with open(options_file, 'r') as f:
+                    config = json.load(f)
+                print(f"📋 Configuration loaded from Home Assistant options")
+                return config
+            except Exception as e:
+                print(f"⚠️ Error reading options file: {e}")
+        
+        # Fallback para variáveis de ambiente (para desenvolvimento)
+        print(f"📋 Configuration loaded from environment variables")
+        return {
+            'max_images': int(os.getenv('MAX_IMAGES', 4)),
+            'image_quality': int(os.getenv('IMAGE_QUALITY', 85)),
+            'cell_width': int(os.getenv('CELL_WIDTH', 400)),
+            'cell_height': int(os.getenv('CELL_HEIGHT', 300)),
+            'timeout': int(os.getenv('TIMEOUT', 10)),
+            'redis_host': os.getenv('REDIS_HOST', 'localhost'),
+            'redis_port': int(os.getenv('REDIS_PORT', 6379)),
+            'redis_password': os.getenv('REDIS_PASSWORD', ''),
+            'cache_ttl': int(os.getenv('CACHE_TTL', 600)),
+            'enable_cache': os.getenv('ENABLE_CACHE', 'true').lower() == 'true',
+            'redis_required': os.getenv('REDIS_REQUIRED', 'true').lower() == 'true'
+        }
     
     def get_config_dict(self) -> dict:
         """Retorna configuração atual como dicionário para cache key"""
@@ -393,6 +437,40 @@ def combine_images():
     except Exception as e:
         return jsonify({'error': f'Erro interno: {str(e)}'}), 500
 
+@app.route('/config', methods=['GET'])
+def get_current_config():
+    """Endpoint para mostrar configuração atual"""
+    try:
+        # Recarrega configuração atual
+        current_config = combiner.load_config()
+        
+        return jsonify({
+            'config_source': 'Home Assistant options.json' if os.path.exists('/data/options.json') else 'Environment variables',
+            'image_settings': {
+                'max_images': combiner.max_images,
+                'image_quality': combiner.image_quality,
+                'cell_width': combiner.cell_width,
+                'cell_height': combiner.cell_height,
+                'timeout': combiner.timeout
+            },
+            'redis_settings': {
+                'host': current_config.get('redis_host', 'localhost'),
+                'port': current_config.get('redis_port', 6379),
+                'password_set': bool(current_config.get('redis_password', '')),
+                'cache_ttl': current_config.get('cache_ttl', 600),
+                'enable_cache': current_config.get('enable_cache', True),
+                'redis_required': current_config.get('redis_required', True)
+            },
+            'cache_status': {
+                'enabled': combiner.cache.enabled,
+                'connected': combiner.cache.enabled and combiner.cache.redis_client is not None
+            },
+            'raw_config': current_config
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Erro ao obter configuração: {str(e)}'}), 500
+
 @app.route('/cache/stats', methods=['GET'])
 def cache_stats():
     """Endpoint para estatísticas do cache"""
@@ -459,6 +537,7 @@ def home():
         'endpoints': {
             'POST /combine': 'Combina imagens e retorna chave única (JSON response)',
             'GET /image/<key>': 'Recupera imagem usando chave única',
+            'GET /config': 'Mostra configuração atual em tempo real',
             'GET /cache/stats': 'Estatísticas do cache Redis',
             'POST /cache/clear': 'Limpa o cache Redis',
             'GET /health': 'Health check do serviço',
@@ -500,16 +579,17 @@ if __name__ == '__main__':
     
     # Log startup information
     print(f"🚀 Starting Image Combiner API v1.1.0")
-    print(f"📊 Configuration:")
+    print(f"📊 Image Configuration:")
     print(f"   - Max images: {combiner.max_images}")
     print(f"   - Image quality: {combiner.image_quality}")
     print(f"   - Cell dimensions: {combiner.cell_width}x{combiner.cell_height}")
     print(f"   - Timeout: {combiner.timeout}s")
-    print(f"💾 Cache: {'Enabled' if combiner.cache.enabled else 'Disabled'}")
+    print(f"💾 Cache Configuration:")
+    print(f"   - Enabled: {'Yes' if combiner.cache.enabled else 'No'}")
     if combiner.cache.enabled:
         print(f"   - TTL: {combiner.cache.ttl}s")
         print(f"   - Compression: gzip level 6")
-    print(f"🔑 New Features:")
+    print(f"🔑 Features:")
     print(f"   - Key-based image retrieval")
     print(f"   - JSON response with unique keys")
     print(f"🌐 Server starting on http://0.0.0.0:5000")
