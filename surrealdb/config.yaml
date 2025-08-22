@@ -1,5 +1,5 @@
 name: SurrealDB
-version: "1.0.0"
+version: "1.0.1"
 slug: surrealdb
 description: "SurrealDB - A scalable, distributed, collaborative, document-graph database"
 url: "https://github.com/FernandoWahl/ha-addons"
@@ -34,4 +34,3 @@ schema:
   data_path: str
 map:
   - data:rw
-image: "ghcr.io/home-assistant/{arch}-addon-surrealdb"

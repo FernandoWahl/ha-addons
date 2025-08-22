@@ -19,6 +19,11 @@ RUN apk add --no-cache \
     git \
     && pip3 install --no-cache-dir --upgrade pip
 
+# Install SurrealDB
+RUN curl -sSf https://install.surrealdb.com | sh && \
+    mv /root/.surrealdb/surreal /usr/local/bin/surreal && \
+    chmod +x /usr/local/bin/surreal
+
 # Set working directory
 WORKDIR /app
 
