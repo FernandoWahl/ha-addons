@@ -1,0 +1,52 @@
+configuration:
+  database_url:
+    name: URL do Banco de Dados
+    description: URL de conexão do banco de dados (use 'memory' para banco em memória)
+  database_user:
+    name: Usuário do Banco
+    description: Nome de usuário do banco de dados
+  database_password:
+    name: Senha do Banco
+    description: Senha do banco de dados
+  openai_api_key:
+    name: Chave API OpenAI
+    description: Sua chave API da OpenAI para modelos GPT
+  anthropic_api_key:
+    name: Chave API Anthropic
+    description: Sua chave API da Anthropic para modelos Claude
+  groq_api_key:
+    name: Chave API Groq
+    description: Sua chave API da Groq para inferência rápida
+  google_api_key:
+    name: Chave API Google
+    description: Sua chave API do Google AI para modelos Gemini
+  mistral_api_key:
+    name: Chave API Mistral
+    description: Sua chave API da Mistral AI
+  deepseek_api_key:
+    name: Chave API DeepSeek
+    description: Sua chave API da DeepSeek
+  ollama_base_url:
+    name: URL Base Ollama
+    description: URL do seu servidor Ollama para modelos locais
+  debug:
+    name: Modo Debug
+    description: Ativar logs de debug
+  log_level:
+    name: Nível de Log
+    description: Definir o nível de logging
+  max_file_size:
+    name: Tamanho Máximo do Arquivo (MB)
+    description: Tamanho máximo permitido para uploads em megabytes
+  allowed_file_types:
+    name: Tipos de Arquivo Permitidos
+    description: Lista de extensões de arquivo permitidas para upload
+  enable_auth:
+    name: Ativar Autenticação
+    description: Exigir nome de usuário e senha para acessar a aplicação
+  auth_username:
+    name: Nome de Usuário
+    description: Nome de usuário para autenticação (obrigatório se auth estiver ativado)
+  auth_password:
+    name: Senha
+    description: Senha para autenticação (obrigatório se auth estiver ativado)

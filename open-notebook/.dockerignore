@@ -1,0 +1,38 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+DOCS.md
+docs/
+
+# Development files
+.vscode/
+.idea/
+*.pyc
+__pycache__/
+.pytest_cache/
+.coverage
+.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.log
+logs/
+
+# Test files
+tests/
+test_*
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Claude sessions
+.claude/
