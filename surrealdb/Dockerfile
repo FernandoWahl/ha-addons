@@ -1,8 +1,8 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Install curl for SurrealDB installation
-RUN apk add --no-cache curl
+# Install curl and debugging tools
+RUN apk add --no-cache curl file ldd
 
 # Install SurrealDB and find where it was installed
 RUN curl -sSf https://install.surrealdb.com | sh && \
@@ -21,8 +21,13 @@ RUN if [ -f /root/.surrealdb/surreal ]; then \
         exit 1; \
     fi
 
-# Verify SurrealDB installation
-RUN /usr/local/bin/surreal version
+# Debug the binary
+RUN echo "=== DEBUGGING SURREAL BINARY ===" && \
+    ls -la /usr/local/bin/surreal && \
+    file /usr/local/bin/surreal && \
+    ldd /usr/local/bin/surreal || echo "ldd failed - static binary or missing libs" && \
+    echo "=== TRYING TO EXECUTE ===" && \
+    /usr/local/bin/surreal version || echo "Execution failed"
 
 # Copy run script
 COPY run.sh /
