@@ -1,0 +1,37 @@
+name: SurrealDB
+version: "1.0.0"
+slug: surrealdb
+description: "SurrealDB - A scalable, distributed, collaborative, document-graph database"
+url: "https://github.com/FernandoWahl/ha-addons"
+arch:
+  - armhf
+  - armv7
+  - aarch64
+  - amd64
+  - i386
+init: false
+ports:
+  8000/tcp: 8000
+ports_description:
+  8000/tcp: "SurrealDB WebSocket/HTTP API"
+options:
+  username: "root"
+  password: "root"
+  database: "open_notebook"
+  bind_address: "0.0.0.0:8000"
+  log_level: "info"
+  auth_enabled: true
+  storage_type: "memory"
+  data_path: "/data/surrealdb"
+schema:
+  username: str
+  password: password
+  database: str
+  bind_address: str
+  log_level: match(trace|debug|info|warn|error)
+  auth_enabled: bool
+  storage_type: match(memory|file|tikv)
+  data_path: str
+map:
+  - data:rw
+image: "ghcr.io/home-assistant/{arch}-addon-surrealdb"
