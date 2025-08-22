@@ -1,26 +1,40 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Minimal installation
-RUN apk add --no-cache python3 py3-pip curl
-RUN pip3 install --no-cache-dir streamlit python-dotenv
+# Install system dependencies
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    curl \
+    supervisor \
+    && pip3 install --no-cache-dir --upgrade pip
 
 # Set working directory
 WORKDIR /app
 
-# Copy minimal files
-COPY app_home_minimal.py /app/app_home.py
-COPY run_minimal.sh /run.sh
+# Copy and install requirements
+COPY requirements.txt /tmp/requirements.txt
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
 
-# Create directories and set permissions
-RUN mkdir -p /app/logs /config/open-notebook /share/open-notebook && \
-    chmod +x /run.sh
+# Copy essential application files
+COPY app_home_working.py /app/app_home.py
+COPY run.sh /
+COPY supervisord.conf /app/
 
-# Expose port
-EXPOSE 8501
+# Create a simple FastAPI app for now
+RUN echo 'from fastapi import FastAPI\napp = FastAPI()\n@app.get("/")\ndef read_root():\n    return {"message": "Open Notebook API"}' > /app/run_api.py
 
-# Simple health check
-HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=2 \
+# Create directories
+RUN mkdir -p /app/logs /config/open-notebook /share/open-notebook
+
+# Set permissions
+RUN chmod +x /run.sh
+
+# Expose ports
+EXPOSE 8501 8000
+
+# Health check
+HEALTHCHECK --interval=60s --timeout=30s --start-period=120s --retries=2 \
     CMD curl -f http://localhost:8501 || exit 1
 
 # Run
