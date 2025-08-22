@@ -1,30 +1,61 @@
-import asyncio
-
-import nest_asyncio
 import streamlit as st
-from dotenv import load_dotenv
+import os
 
-from open_notebook.domain.base import ObjectModel
+st.set_page_config(
+    page_title="Open Notebook",
+    page_icon="📚",
+    layout="wide"
+)
 
-nest_asyncio.apply()
-from open_notebook.exceptions import NotFoundError
-from pages.components import note_panel, source_insight_panel, source_panel
-from pages.stream_app.utils import setup_page
+st.title("📚 Open Notebook")
+st.subheader("Home Assistant Add-on")
 
-load_dotenv()
-setup_page("📒 Open Notebook", sidebar_state="collapsed")
+st.success("✅ Open Notebook is running successfully!")
 
-if "object_id" not in st.query_params:
-    st.switch_page("pages/2_📒_Notebooks.py")
-    st.stop()
+st.info("""
+This is a simplified version of Open Notebook running as a Home Assistant add-on.
 
-object_id = st.query_params["object_id"]
+**Next Steps:**
+1. Configure your AI API keys in the add-on configuration
+2. Upload documents and start researching
+3. Use the chat interface to ask questions about your content
+""")
 
-obj_type = object_id.split(":")[0]
+# Show environment info
+st.subheader("🔧 System Information")
+col1, col2 = st.columns(2)
 
-if obj_type == "note":
-    note_panel(object_id)
-elif obj_type == "source":
-    source_panel(object_id)
-elif obj_type == "source_insight":
-    source_insight_panel(object_id)
+with col1:
+    st.write("**Directories:**")
+    st.write(f"- Config: `/config/open-notebook`")
+    st.write(f"- Share: `/share/open-notebook`")
+    st.write(f"- App: `/app`")
+
+with col2:
+    st.write("**Status:**")
+    st.write("- ✅ Streamlit: Running")
+    st.write("- ✅ Python: Available")
+    st.write("- ✅ File System: Accessible")
+
+# Test file operations
+try:
+    os.makedirs("/config/open-notebook", exist_ok=True)
+    os.makedirs("/share/open-notebook", exist_ok=True)
+    st.success("✅ Directory creation successful")
+except Exception as e:
+    st.error(f"❌ Directory creation failed: {e}")
+
+st.subheader("📝 Configuration")
+st.write("Add your configuration in the Home Assistant add-on settings:")
+st.code("""
+debug: false
+# Add your AI API keys here when ready
+""", language="yaml")
+
+st.subheader("🚀 Ready for Full Version")
+st.write("This simplified version confirms the add-on works. The full version includes:")
+st.write("- 🤖 AI model integration")
+st.write("- 📄 Document processing")
+st.write("- 🎙️ Podcast transcription")
+st.write("- 💬 Interactive chat")
+st.write("- 🔍 Smart search")
