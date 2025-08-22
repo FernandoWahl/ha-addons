@@ -1,36 +1,20 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Install curl and debugging tools (ldd is part of musl-utils in Alpine)
-RUN apk add --no-cache curl file musl-utils
+# Install curl and glibc compatibility for SurrealDB
+RUN apk add --no-cache curl && \
+    # Install glibc compatibility layer for Alpine
+    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
+    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-2.34-r0.apk && \
+    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-bin-2.34-r0.apk && \
+    apk add --no-cache --force-overwrite glibc-2.34-r0.apk glibc-bin-2.34-r0.apk && \
+    rm glibc-2.34-r0.apk glibc-bin-2.34-r0.apk
 
-# Install SurrealDB and find where it was installed
-RUN curl -sSf https://install.surrealdb.com | sh && \
-    find / -name "surreal" -type f 2>/dev/null | head -5 && \
-    ls -la /usr/local/bin/ && \
-    ls -la /root/.surrealdb/ 2>/dev/null || echo "No .surrealdb directory"
+# Install SurrealDB
+RUN curl -sSf https://install.surrealdb.com | sh
 
-# Try to find and move SurrealDB to the correct location
-RUN if [ -f /root/.surrealdb/surreal ]; then \
-        cp /root/.surrealdb/surreal /usr/local/bin/surreal && \
-        chmod +x /usr/local/bin/surreal; \
-    elif [ -f /usr/local/bin/surreal ]; then \
-        chmod +x /usr/local/bin/surreal; \
-    else \
-        echo "SurrealDB binary not found in expected locations"; \
-        exit 1; \
-    fi
-
-# Debug the binary
-RUN echo "=== DEBUGGING SURREAL BINARY ===" && \
-    ls -la /usr/local/bin/surreal && \
-    file /usr/local/bin/surreal && \
-    ldd /usr/local/bin/surreal || echo "ldd failed - static binary or missing libs" && \
-    echo "=== CHECKING SYSTEM INFO ===" && \
-    uname -a && \
-    cat /etc/os-release && \
-    echo "=== TRYING TO EXECUTE ===" && \
-    /usr/local/bin/surreal version || echo "Execution failed with exit code: $?"
+# Verify SurrealDB installation
+RUN /usr/local/bin/surreal version
 
 # Copy run script
 COPY run.sh /

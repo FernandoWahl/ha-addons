@@ -73,7 +73,7 @@ if [[ "$STORAGE_TYPE" == "file" ]]; then
 fi
 
 # Build SurrealDB command
-SURREAL_CMD="surreal start"
+SURREAL_CMD="/usr/local/bin/surreal start"
 
 # Add bind address
 SURREAL_CMD="$SURREAL_CMD --bind $BIND_ADDRESS"
