@@ -1,7 +1,7 @@
 name: Open Notebook
-version: "0.4.1"
+version: "0.5.0"
 slug: open_notebook
-description: An open source, privacy-focused alternative to Google's Notebook LM for research and note-taking
+description: "Full-featured AI-powered research assistant - Complete Open Notebook implementation"
 url: https://github.com/FernandoWahl/ha-addons
 arch:
   - aarch64

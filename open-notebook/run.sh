@@ -1,31 +1,31 @@
 #!/usr/bin/with-contenv bashio
 
 # ==============================================================================
-# Home Assistant Add-on: Open Notebook - Full Application
+# Home Assistant Add-on: Open Notebook - Full Version
 # ==============================================================================
 
 bashio::log.info "=========================================="
-bashio::log.info "🚀 Starting Open Notebook v0.4.0 - Full Application"
+bashio::log.info "🚀 Starting Open Notebook v0.5.0 - FULL VERSION"
 bashio::log.info "=========================================="
 
 # Step 1: Create directories
 bashio::log.info "📁 Creating directories..."
-mkdir -p /config/open-notebook
-mkdir -p /share/open-notebook
-mkdir -p /app/logs
-mkdir -p /app/data
+mkdir -p /config/open-notebook/{data,notebooks,uploads,exports}
+mkdir -p /share/open-notebook/{documents,podcasts,models}
+mkdir -p /app/{logs,data}
 bashio::log.info "✅ Directories created successfully"
 
 # Step 2: Set permissions
 bashio::log.info "🔐 Setting permissions..."
 chmod -R 755 /config/open-notebook
 chmod -R 755 /share/open-notebook
+chmod -R 755 /app/data
 bashio::log.info "✅ Permissions set successfully"
 
 # Step 3: Read configuration
 bashio::log.info "⚙️ Reading configuration from Home Assistant..."
 
-DATABASE_URL=$(bashio::config 'database_url' 'memory')
+DATABASE_URL=$(bashio::config 'database_url' 'file:///config/open-notebook/data/database.db')
 DATABASE_USER=$(bashio::config 'database_user' 'root')
 DATABASE_PASSWORD=$(bashio::config 'database_password' 'root')
 DEBUG=$(bashio::config 'debug' 'false')
@@ -81,8 +81,8 @@ fi
 
 bashio::log.info "🤖 Total AI providers configured: ${PROVIDER_COUNT}"
 
-# Step 5: Create environment file
-bashio::log.info "📝 Creating environment configuration..."
+# Step 5: Create comprehensive environment file
+bashio::log.info "📝 Creating comprehensive environment configuration..."
 
 cat > /app/.env << EOF
 # Database Configuration
@@ -112,40 +112,86 @@ AUTH_USERNAME=${AUTH_USERNAME}
 AUTH_PASSWORD=${AUTH_PASSWORD}
 
 # Paths
-DATA_DIR=/config/open-notebook
+DATA_DIR=/config/open-notebook/data
 SHARE_DIR=/share/open-notebook
+NOTEBOOKS_DIR=/config/open-notebook/notebooks
+UPLOADS_DIR=/config/open-notebook/uploads
+EXPORTS_DIR=/config/open-notebook/exports
+DOCUMENTS_DIR=/share/open-notebook/documents
+PODCASTS_DIR=/share/open-notebook/podcasts
+MODELS_DIR=/share/open-notebook/models
+
+# Application Configuration
+STREAMLIT_SERVER_PORT=8501
+FASTAPI_SERVER_PORT=8000
+STREAMLIT_SERVER_ADDRESS=0.0.0.0
+FASTAPI_SERVER_ADDRESS=0.0.0.0
+
+# Feature Flags
+ENABLE_DOCUMENT_PROCESSING=true
+ENABLE_PODCAST_PROCESSING=true
+ENABLE_EMBEDDINGS=true
+ENABLE_SEARCH=true
+ENABLE_TRANSFORMATIONS=true
 EOF
 
-bashio::log.info "✅ Environment file created"
+bashio::log.info "✅ Comprehensive environment file created"
 
-# Step 6: Configuration summary
-bashio::log.info "📊 Configuration Summary:"
+# Step 6: Initialize database
+bashio::log.info "🗄️ Initializing database..."
+cd /app
+python3 -c "
+import os
+from open_notebook.database.migrate import run_migrations
+try:
+    run_migrations()
+    print('✅ Database initialized successfully')
+except Exception as e:
+    print(f'⚠️ Database initialization: {e}')
+" || bashio::log.warning "Database initialization skipped"
+
+# Step 7: Configuration summary
+bashio::log.info "📊 Full Configuration Summary:"
 bashio::log.info "  🗄️ Database: ${DATABASE_URL}"
 bashio::log.info "  🐛 Debug: ${DEBUG}"
 bashio::log.info "  📝 Log Level: ${LOG_LEVEL}"
+bashio::log.info "  📁 Max File Size: ${MAX_FILE_SIZE}MB"
+bashio::log.info "  🔐 Authentication: ${ENABLE_AUTH}"
 bashio::log.info "  🤖 AI Providers: ${PROVIDER_COUNT} configured"
+bashio::log.info "  📄 Document Processing: Enabled"
+bashio::log.info "  🎙️ Podcast Processing: Enabled"
+bashio::log.info "  🔍 Search & Embeddings: Enabled"
 
-# Step 7: Validate AI configuration
+# Step 8: Validate AI configuration
 if [[ ${PROVIDER_COUNT} -eq 0 ]]; then
-    bashio::log.warning "⚠️ No AI providers configured - some features will be limited"
+    bashio::log.warning "⚠️ No AI providers configured - AI features will be limited"
+    bashio::log.warning "   Please configure at least one AI API key for full functionality"
 else
-    bashio::log.info "✅ AI configuration ready"
+    bashio::log.info "✅ AI configuration ready - ${PROVIDER_COUNT} provider(s) available"
 fi
 
-# Step 8: Set environment
+# Step 9: Set comprehensive environment
 export PYTHONPATH="/app"
 export PYTHONUNBUFFERED=1
+export STREAMLIT_SERVER_HEADLESS=true
+export STREAMLIT_SERVER_ENABLE_CORS=false
+export STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION=false
 
-# Step 9: Change to app directory
+# Step 10: Change to app directory
 cd /app
 
-# Step 10: Start services with supervisor
+# Step 11: Start comprehensive services
 bashio::log.info "=========================================="
-bashio::log.info "🌟 Starting Open Notebook Services"
+bashio::log.info "🌟 Starting Open Notebook Full Services"
 bashio::log.info "=========================================="
-bashio::log.info "🌐 Streamlit UI: http://[HOST]:8501"
+bashio::log.info "🌐 Streamlit Frontend: http://[HOST]:8501"
 bashio::log.info "⚡ FastAPI Backend: http://[HOST]:8000"
+bashio::log.info "🗄️ Database: ${DATABASE_URL}"
+bashio::log.info "📁 Data Directory: /config/open-notebook"
+bashio::log.info "📂 Shared Storage: /share/open-notebook"
 bashio::log.info "=========================================="
 
-# Start supervisor to manage both services
+bashio::log.info "🚀 Launching supervisor with full services..."
+
+# Start supervisor to manage all services
 exec supervisord -c /app/supervisord.conf
