@@ -1,18 +1,41 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Install basic dependencies
-RUN apk add --no-cache python3 py3-pip curl
+# Install system dependencies
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    curl \
+    supervisor \
+    build-base \
+    python3-dev \
+    libffi-dev \
+    openssl-dev \
+    sqlite \
+    sqlite-dev \
+    && pip3 install --no-cache-dir --upgrade pip
 
 # Set working directory
 WORKDIR /app
 
-# Install Python packages
-RUN pip3 install --no-cache-dir streamlit fastapi uvicorn python-dotenv loguru
+# Copy requirements and install Python packages
+COPY requirements.txt /tmp/requirements.txt
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
 
-# Copy essential files
-COPY app_home.py /app/
+# Copy application files
+COPY open_notebook/ /app/open_notebook/
+COPY api/ /app/api/
+COPY pages/ /app/pages/
+COPY migrations/ /app/migrations/
+COPY commands/ /app/commands/
+COPY prompts/ /app/prompts/
+COPY .streamlit/ /app/.streamlit/
+COPY app_home_original.py /app/app_home.py
+COPY run_api.py /app/
+COPY pyproject.toml /app/
+COPY supervisord.conf /app/
 COPY run.sh /
+COPY logo.png /app/
 
 # Create directories
 RUN mkdir -p /app/logs /config/open-notebook /share/open-notebook
@@ -23,7 +46,7 @@ RUN chmod +x /run.sh
 # Expose ports
 EXPOSE 8501 8000
 
-# Simple health check
+# Health check
 HEALTHCHECK --interval=60s --timeout=30s --start-period=120s --retries=2 \
     CMD curl -f http://localhost:8501 || exit 1
 
