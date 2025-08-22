@@ -1,20 +1,25 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Install curl and glibc compatibility for SurrealDB
-RUN apk add --no-cache curl && \
-    # Install glibc compatibility layer for Alpine
-    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
+# Install dependencies
+RUN apk add --no-cache curl wget
+
+# Install glibc compatibility layer FIRST
+RUN wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
     wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-2.34-r0.apk && \
     wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-bin-2.34-r0.apk && \
     apk add --no-cache --force-overwrite glibc-2.34-r0.apk glibc-bin-2.34-r0.apk && \
     rm glibc-2.34-r0.apk glibc-bin-2.34-r0.apk
 
-# Install SurrealDB
+# Now install SurrealDB (with glibc available)
 RUN curl -sSf https://install.surrealdb.com | sh
 
-# Verify SurrealDB installation
-RUN /usr/local/bin/surreal version
+# Test if SurrealDB works
+RUN echo "Testing SurrealDB installation..." && \
+    ls -la /usr/local/bin/surreal && \
+    file /usr/local/bin/surreal && \
+    ldd /usr/local/bin/surreal || echo "Static binary or ldd failed" && \
+    /usr/local/bin/surreal version
 
 # Copy run script
 COPY run.sh /
