@@ -1,10 +1,12 @@
 # SurrealDB Add-on for Home Assistant
 
-![SurrealDB Logo](https://raw.githubusercontent.com/surrealdb/surrealdb/main/img/black%20logo.svg)
+![SurrealDB Logo](logo-black.svg)
 
 ## About
 
 SurrealDB is a scalable, distributed, collaborative, document-graph database, designed for the realtime web. This add-on provides a SurrealDB instance that can be used by other Home Assistant add-ons, particularly the Open Notebook add-on.
+
+![SurrealDB Features](features.svg)
 
 ## Features
 
@@ -14,6 +16,8 @@ SurrealDB is a scalable, distributed, collaborative, document-graph database, de
 - 📊 **ACID transactions** - Full ACID compliance
 - 🌐 **WebSocket & HTTP APIs** - Multiple connection methods
 - 💾 **Flexible storage** - Memory, File, or TiKV backends
+
+![SurrealDB Docker](docker-logo.svg)
 
 ## Installation
 
