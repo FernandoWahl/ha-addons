@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import requests
 from dotenv import load_dotenv
+from auth import check_password, show_logout
 
 # Load environment
 load_dotenv()
@@ -12,8 +13,16 @@ st.set_page_config(
     layout="wide"
 )
 
+# Check authentication first
+if not check_password():
+    st.stop()
+
 # Sidebar navigation
 st.sidebar.title("📚 Open Notebook")
+
+# Show logout option if authenticated
+show_logout()
+
 page = st.sidebar.selectbox("Navigate", [
     "🏠 Home",
     "📚 Notebooks", 

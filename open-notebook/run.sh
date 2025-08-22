@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # ==============================================================================
-# Home Assistant Add-on: Open Notebook - Full Version
+# Home Assistant Add-on: Open Notebook - FULL ORIGINAL VERSION
 # ==============================================================================
 
 echo "=========================================="
-echo "🚀 Starting Open Notebook v0.5.3 - SECURE & DEBUGGABLE"
+echo "🚀 Starting Open Notebook v1.0.0 - FULL ORIGINAL"
 echo "⏰ $(date '+%Y-%m-%d %H:%M:%S')"
 echo "=========================================="
 
@@ -67,15 +67,14 @@ except Exception as e:
     echo "$default"
 }
 
+# Read Home Assistant configuration
 DATABASE_URL=$(read_config 'database_url' 'file:///config/open-notebook/data/database.db')
-DATABASE_USER=$(read_config 'database_user' 'root')
-DATABASE_PASSWORD=$(read_config 'database_password' 'root')
 DEBUG=$(read_config 'debug' 'false')
 LOG_LEVEL=$(read_config 'log_level' 'INFO')
 MAX_FILE_SIZE=$(read_config 'max_file_size' '50')
 ENABLE_AUTH=$(read_config 'enable_auth' 'false')
 
-# AI API Keys
+# AI API Keys (map to original variable names)
 OPENAI_API_KEY=$(read_config 'openai_api_key' '')
 ANTHROPIC_API_KEY=$(read_config 'anthropic_api_key' '')
 GROQ_API_KEY=$(read_config 'groq_api_key' '')
@@ -84,9 +83,16 @@ MISTRAL_API_KEY=$(read_config 'mistral_api_key' '')
 DEEPSEEK_API_KEY=$(read_config 'deepseek_api_key' '')
 OLLAMA_BASE_URL=$(read_config 'ollama_base_url' '')
 
-# Authentication
+# Authentication (map to original variable)
 AUTH_USERNAME=$(read_config 'auth_username' '')
 AUTH_PASSWORD=$(read_config 'auth_password' '')
+
+# Map to original Open Notebook variable
+if [[ "${ENABLE_AUTH}" == "true" && -n "${AUTH_PASSWORD}" ]]; then
+    OPEN_NOTEBOOK_PASSWORD="${AUTH_PASSWORD}"
+else
+    OPEN_NOTEBOOK_PASSWORD=""
+fi
 
 echo "✅ Configuration loaded successfully"
 
@@ -97,6 +103,7 @@ echo "  📝 LOG_LEVEL: '${LOG_LEVEL}'"
 echo "  🤖 OPENAI_API_KEY: '${OPENAI_API_KEY:0:10}...'" 
 echo "  🤖 ANTHROPIC_API_KEY: '${ANTHROPIC_API_KEY:0:10}...'"
 echo "  🤖 GROQ_API_KEY: '${GROQ_API_KEY:0:10}...'"
+echo "  🔐 AUTHENTICATION: '${ENABLE_AUTH}'"
 
 # Step 5: Count configured providers
 echo "🤖 Checking AI provider configurations..."
@@ -153,16 +160,16 @@ fi
 
 echo "🤖 Total AI providers configured: ${PROVIDER_COUNT}"
 
-# Step 5: Create comprehensive environment file
+# Step 6: Create comprehensive environment file (using original variable names)
 echo "📝 Creating comprehensive environment configuration..."
 
 cat > /app/.env << EOF
-# Database Configuration
-DATABASE_URL=${DATABASE_URL}
-DATABASE_USER=${DATABASE_USER}
-DATABASE_PASSWORD=${DATABASE_PASSWORD}
+# Original Open Notebook Environment Variables
 
-# AI Model API Keys
+# Security (original variable name)
+OPEN_NOTEBOOK_PASSWORD=${OPEN_NOTEBOOK_PASSWORD}
+
+# AI Model API Keys (original variable names)
 OPENAI_API_KEY=${OPENAI_API_KEY}
 ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
 GROQ_API_KEY=${GROQ_API_KEY}
@@ -170,18 +177,16 @@ GOOGLE_API_KEY=${GOOGLE_API_KEY}
 MISTRAL_API_KEY=${MISTRAL_API_KEY}
 DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
 
-# Ollama Configuration
-OLLAMA_BASE_URL=${OLLAMA_BASE_URL}
+# Ollama Configuration (original variable name)
+OLLAMA_API_BASE=${OLLAMA_BASE_URL}
 
 # Application Settings
 DEBUG=${DEBUG}
 LOG_LEVEL=${LOG_LEVEL}
 MAX_FILE_SIZE_MB=${MAX_FILE_SIZE}
 
-# Security
-ENABLE_AUTH=${ENABLE_AUTH}
-AUTH_USERNAME=${AUTH_USERNAME}
-AUTH_PASSWORD=${AUTH_PASSWORD}
+# Database Configuration
+DATABASE_URL=${DATABASE_URL}
 
 # Paths
 DATA_DIR=/config/open-notebook/data
@@ -199,17 +204,20 @@ FASTAPI_SERVER_PORT=8000
 STREAMLIT_SERVER_ADDRESS=0.0.0.0
 FASTAPI_SERVER_ADDRESS=0.0.0.0
 
-# Feature Flags
+# Feature Flags (all enabled in full version)
 ENABLE_DOCUMENT_PROCESSING=true
 ENABLE_PODCAST_PROCESSING=true
 ENABLE_EMBEDDINGS=true
 ENABLE_SEARCH=true
 ENABLE_TRANSFORMATIONS=true
+ENABLE_LANGCHAIN=true
+ENABLE_LANGGRAPH=true
+ENABLE_SURREALDB=true
 EOF
 
 echo "✅ Comprehensive environment file created"
 
-# Step 6: Initialize database (optional)
+# Step 7: Initialize database (if available)
 echo "🗄️ Checking database initialization..."
 cd /app
 if [ -f "open_notebook/database/migrate.py" ]; then
@@ -227,7 +235,7 @@ else
     echo "⚠️ Database migration not available"
 fi
 
-# Step 7: Configuration summary
+# Step 8: Configuration summary
 echo "📊 Full Configuration Summary:"
 echo "  🗄️ Database: ${DATABASE_URL}"
 echo "  🐛 Debug: ${DEBUG}"
@@ -238,8 +246,11 @@ echo "  🤖 AI Providers: ${PROVIDER_COUNT} configured"
 echo "  📄 Document Processing: Enabled"
 echo "  🎙️ Podcast Processing: Enabled"
 echo "  🔍 Search & Embeddings: Enabled"
+echo "  🧠 LangChain: Enabled"
+echo "  🔄 LangGraph: Enabled"
+echo "  🗄️ SurrealDB: Enabled"
 
-# Step 8: Validate AI configuration
+# Step 9: Validate AI configuration
 if [[ ${PROVIDER_COUNT} -eq 0 ]]; then
     echo "=========================================="
     echo "⚠️ WARNING: No AI providers configured!"
@@ -269,19 +280,32 @@ else
     echo "✅ AI configuration ready - ${PROVIDER_COUNT} provider(s) available"
 fi
 
-# Step 9: Set comprehensive environment
+# Step 10: Set comprehensive environment
 export PYTHONPATH="/app"
 export PYTHONUNBUFFERED=1
 export STREAMLIT_SERVER_HEADLESS=true
 export STREAMLIT_SERVER_ENABLE_CORS=false
 export STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION=false
 
-# Step 10: Change to app directory
+# Export all environment variables for the applications
+export OPEN_NOTEBOOK_PASSWORD
+export OPENAI_API_KEY
+export ANTHROPIC_API_KEY
+export GROQ_API_KEY
+export GOOGLE_API_KEY
+export MISTRAL_API_KEY
+export DEEPSEEK_API_KEY
+export OLLAMA_API_BASE
+export DEBUG
+export LOG_LEVEL
+export DATABASE_URL
+
+# Step 11: Change to app directory
 cd /app
 
-# Step 11: Start comprehensive services
+# Step 12: Start comprehensive services
 echo "=========================================="
-echo "🌟 Starting Open Notebook Full Services"
+echo "🌟 Starting Open Notebook FULL ORIGINAL"
 echo "⏰ $(date '+%Y-%m-%d %H:%M:%S')"
 echo "=========================================="
 echo "🌐 Streamlit Frontend: http://[HOST]:8501"
@@ -289,9 +313,14 @@ echo "⚡ FastAPI Backend: http://[HOST]:8000"
 echo "🗄️ Database: ${DATABASE_URL}"
 echo "📁 Data Directory: /config/open-notebook"
 echo "📂 Shared Storage: /share/open-notebook"
+echo "🧠 LangChain: Enabled"
+echo "🔄 LangGraph: Enabled"
+echo "🔍 Vector Search: Enabled"
+echo "🎙️ Podcast Processing: Enabled"
+echo "🗄️ SurrealDB: Enabled"
 echo "=========================================="
 
-echo "🚀 Launching supervisor with full services..."
+echo "🚀 Launching supervisor with full original services..."
 
 # Start supervisor to manage all services
 exec supervisord -c /app/supervisord.conf

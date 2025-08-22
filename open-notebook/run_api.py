@@ -3,9 +3,10 @@
 import os
 import sys
 import uvicorn
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 from typing import List, Optional
 import logging
@@ -13,6 +14,7 @@ from dotenv import load_dotenv
 import json
 import aiofiles
 from pathlib import Path
+import secrets
 
 # Load environment variables
 load_dotenv()
@@ -20,6 +22,37 @@ load_dotenv()
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Security
+security = HTTPBasic()
+
+def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
+    """Verify HTTP Basic Authentication if enabled"""
+    enable_auth = os.getenv('ENABLE_AUTH', 'false').lower() == 'true'
+    
+    if not enable_auth:
+        return True  # No authentication required
+    
+    auth_username = os.getenv('AUTH_USERNAME', '')
+    auth_password = os.getenv('AUTH_PASSWORD', '')
+    
+    if not auth_username or not auth_password:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Authentication is enabled but credentials are not configured"
+        )
+    
+    is_correct_username = secrets.compare_digest(credentials.username, auth_username)
+    is_correct_password = secrets.compare_digest(credentials.password, auth_password)
+    
+    if not (is_correct_username and is_correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    
+    return True
 
 # Create FastAPI app
 app = FastAPI(
@@ -125,7 +158,7 @@ async def health_check():
     }
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat_with_ai(message: ChatMessage):
+async def chat_with_ai(message: ChatMessage, authenticated: bool = Depends(verify_credentials)):
     """Chat with AI providers"""
     try:
         # Get API key for selected provider
@@ -166,7 +199,7 @@ async def chat_with_ai(message: ChatMessage):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/upload")
-async def upload_document(file: UploadFile = File(...)):
+async def upload_document(file: UploadFile = File(...), authenticated: bool = Depends(verify_credentials)):
     """Upload and process documents"""
     try:
         # Validate file type
