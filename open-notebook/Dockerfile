@@ -12,28 +12,13 @@ RUN \
         git \
         curl \
         supervisor \
-        nodejs \
-        npm \
         build-base \
         python3-dev \
         libffi-dev \
         openssl-dev \
-        jpeg-dev \
-        zlib-dev \
-        freetype-dev \
-        lcms2-dev \
-        openjpeg-dev \
-        tiff-dev \
-        tk-dev \
-        tcl-dev \
-        harfbuzz-dev \
-        fribidi-dev \
-        libimagequant-dev \
-        libxcb-dev \
-        libpng-dev \
         sqlite \
         sqlite-dev \
-    && pip3 install --no-cache-dir --upgrade pip uv
+    && pip3 install --no-cache-dir --upgrade pip
 
 # Set working directory
 WORKDIR /app
@@ -67,7 +52,7 @@ RUN chmod a+x /run.sh
 EXPOSE 8501 8000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8501/_stcore/health || exit 1
 
 # Labels
