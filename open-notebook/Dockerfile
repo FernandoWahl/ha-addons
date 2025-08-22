@@ -16,32 +16,28 @@ RUN apk add --no-cache \
     jpeg-dev \
     zlib-dev \
     freetype-dev \
-    && pip3 install --no-cache-dir --upgrade pip
+    git \
+    && pip3 install --no-cache-dir --upgrade pip uv
 
 # Set working directory
 WORKDIR /app
 
-# Copy requirements and install Python packages
-COPY requirements_full.txt /tmp/requirements.txt
-RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
+# Clone the original Open Notebook repository
+RUN git clone https://github.com/lfnovo/open-notebook.git open-notebook-src
 
-# Copy all original application files
-COPY open_notebook/ /app/open_notebook/
-COPY api/ /app/api/
-COPY pages/ /app/pages/
-COPY migrations/ /app/migrations/
-COPY commands/ /app/commands/
-COPY prompts/ /app/prompts/
-COPY .streamlit/ /app/.streamlit/
-COPY app_home_original.py /app/app_home.py
-COPY run_api_original.py /app/run_api.py
-COPY pyproject.toml /app/
-COPY supervisord.conf /app/
+# Install Open Notebook using uv (faster than pip)
+WORKDIR /app/open-notebook-src
+RUN uv pip install --system -e .
+
+# Go back to app directory
+WORKDIR /app
+
+# Copy only our interface files (no modifications to Open Notebook)
 COPY run.sh /
-COPY logo.png /app/
+COPY supervisord_interface.conf /app/supervisord.conf
 
-# Create directories
-RUN mkdir -p /app/logs /app/data /config/open-notebook /share/open-notebook
+# Create directories for Home Assistant integration
+RUN mkdir -p /app/logs /config/open-notebook /share/open-notebook
 
 # Set permissions
 RUN chmod +x /run.sh
@@ -53,5 +49,5 @@ EXPOSE 8501 8000
 HEALTHCHECK --interval=60s --timeout=30s --start-period=300s --retries=3 \
     CMD curl -f http://localhost:8501 || exit 1
 
-# Run
+# Run our interface script
 CMD ["/run.sh"]

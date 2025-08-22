@@ -1,7 +1,7 @@
 name: Open Notebook
-version: "1.0.0"
+version: "2.0.0"
 slug: open_notebook
-description: "Complete Open Notebook implementation - Full original features with LangChain, LangGraph, SurrealDB, and all AI integrations"
+description: "Pure interface to original Open Notebook - No modifications, full compatibility, easy updates"
 url: https://github.com/FernandoWahl/ha-addons
 arch:
   - aarch64

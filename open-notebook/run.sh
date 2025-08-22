@@ -1,32 +1,32 @@
 #!/bin/bash
 
 # ==============================================================================
-# Home Assistant Add-on: Open Notebook - FULL ORIGINAL VERSION
+# Home Assistant Add-on: Open Notebook Interface
+# This script ONLY maps Home Assistant configuration to Open Notebook
+# It does NOT modify the original Open Notebook code
 # ==============================================================================
 
 echo "=========================================="
-echo "🚀 Starting Open Notebook v1.0.0 - FULL ORIGINAL"
+echo "🚀 Open Notebook Interface v2.0.0"
+echo "📦 Using Original Open Notebook (unmodified)"
 echo "⏰ $(date '+%Y-%m-%d %H:%M:%S')"
 echo "=========================================="
 
-# Step 1: Create directories
-echo "📁 Creating directories..."
+# Step 1: Create directories for Home Assistant integration
+echo "📁 Creating Home Assistant directories..."
 mkdir -p /config/open-notebook/{data,notebooks,uploads,exports}
 mkdir -p /share/open-notebook/{documents,podcasts,models}
-mkdir -p /app/{logs,data}
-echo "✅ Directories created successfully"
+mkdir -p /app/logs
+echo "✅ Directories created"
 
 # Step 2: Set permissions
 echo "🔐 Setting permissions..."
 chmod -R 755 /config/open-notebook
 chmod -R 755 /share/open-notebook
-chmod -R 755 /app/data
-echo "✅ Permissions set successfully"
+chmod -R 755 /app/logs
+echo "✅ Permissions set"
 
-# Step 3: Read configuration from Home Assistant
-echo "⚙️ Reading configuration from Home Assistant..."
-
-# Function to read config with fallback
+# Step 3: Function to read Home Assistant configuration
 read_config() {
     local key="$1"
     local default="$2"
@@ -67,14 +67,16 @@ except Exception as e:
     echo "$default"
 }
 
-# Read Home Assistant configuration
-DATABASE_URL=$(read_config 'database_url' 'file:///config/open-notebook/data/database.db')
+# Step 4: Read Home Assistant configuration
+echo "⚙️ Reading Home Assistant configuration..."
+
+# Basic settings
 DEBUG=$(read_config 'debug' 'false')
 LOG_LEVEL=$(read_config 'log_level' 'INFO')
-MAX_FILE_SIZE=$(read_config 'max_file_size' '50')
 ENABLE_AUTH=$(read_config 'enable_auth' 'false')
+AUTH_PASSWORD=$(read_config 'auth_password' '')
 
-# AI API Keys (map to original variable names)
+# AI API Keys
 OPENAI_API_KEY=$(read_config 'openai_api_key' '')
 ANTHROPIC_API_KEY=$(read_config 'anthropic_api_key' '')
 GROQ_API_KEY=$(read_config 'groq_api_key' '')
@@ -83,93 +85,62 @@ MISTRAL_API_KEY=$(read_config 'mistral_api_key' '')
 DEEPSEEK_API_KEY=$(read_config 'deepseek_api_key' '')
 OLLAMA_BASE_URL=$(read_config 'ollama_base_url' '')
 
-# Authentication (map to original variable)
-AUTH_USERNAME=$(read_config 'auth_username' '')
-AUTH_PASSWORD=$(read_config 'auth_password' '')
+echo "✅ Configuration loaded"
 
-# Map to original Open Notebook variable
-if [[ "${ENABLE_AUTH}" == "true" && -n "${AUTH_PASSWORD}" ]]; then
-    OPEN_NOTEBOOK_PASSWORD="${AUTH_PASSWORD}"
-else
-    OPEN_NOTEBOOK_PASSWORD=""
-fi
-
-echo "✅ Configuration loaded successfully"
-
-# Step 4: Debug configuration values
-echo "🔍 Debug - Configuration values loaded:"
-echo "  📊 DEBUG: '${DEBUG}'"
-echo "  📝 LOG_LEVEL: '${LOG_LEVEL}'"
-echo "  🤖 OPENAI_API_KEY: '${OPENAI_API_KEY:0:10}...'" 
-echo "  🤖 ANTHROPIC_API_KEY: '${ANTHROPIC_API_KEY:0:10}...'"
-echo "  🤖 GROQ_API_KEY: '${GROQ_API_KEY:0:10}...'"
-echo "  🔐 AUTHENTICATION: '${ENABLE_AUTH}'"
-
-# Step 5: Count configured providers
-echo "🤖 Checking AI provider configurations..."
+# Step 5: Count configured AI providers
+echo "🤖 Checking AI providers..."
 PROVIDER_COUNT=0
 
 if [[ -n "${OPENAI_API_KEY}" && "${OPENAI_API_KEY}" != "" ]]; then
-    echo "  ✅ OpenAI API configured (${#OPENAI_API_KEY} chars)"
+    echo "  ✅ OpenAI configured"
     PROVIDER_COUNT=$((PROVIDER_COUNT + 1))
-else
-    echo "  ❌ OpenAI API not configured"
 fi
 
 if [[ -n "${ANTHROPIC_API_KEY}" && "${ANTHROPIC_API_KEY}" != "" ]]; then
-    echo "  ✅ Anthropic API configured (${#ANTHROPIC_API_KEY} chars)"
+    echo "  ✅ Anthropic configured"
     PROVIDER_COUNT=$((PROVIDER_COUNT + 1))
-else
-    echo "  ❌ Anthropic API not configured"
 fi
 
 if [[ -n "${GROQ_API_KEY}" && "${GROQ_API_KEY}" != "" ]]; then
-    echo "  ✅ Groq API configured (${#GROQ_API_KEY} chars)"
+    echo "  ✅ Groq configured"
     PROVIDER_COUNT=$((PROVIDER_COUNT + 1))
-else
-    echo "  ❌ Groq API not configured"
 fi
 
 if [[ -n "${GOOGLE_API_KEY}" && "${GOOGLE_API_KEY}" != "" ]]; then
-    echo "  ✅ Google AI API configured (${#GOOGLE_API_KEY} chars)"
+    echo "  ✅ Google AI configured"
     PROVIDER_COUNT=$((PROVIDER_COUNT + 1))
-else
-    echo "  ❌ Google AI API not configured"
 fi
 
 if [[ -n "${MISTRAL_API_KEY}" && "${MISTRAL_API_KEY}" != "" ]]; then
-    echo "  ✅ Mistral AI API configured (${#MISTRAL_API_KEY} chars)"
+    echo "  ✅ Mistral configured"
     PROVIDER_COUNT=$((PROVIDER_COUNT + 1))
-else
-    echo "  ❌ Mistral AI API not configured"
 fi
 
 if [[ -n "${DEEPSEEK_API_KEY}" && "${DEEPSEEK_API_KEY}" != "" ]]; then
-    echo "  ✅ DeepSeek API configured (${#DEEPSEEK_API_KEY} chars)"
+    echo "  ✅ DeepSeek configured"
     PROVIDER_COUNT=$((PROVIDER_COUNT + 1))
-else
-    echo "  ❌ DeepSeek API not configured"
 fi
 
 if [[ -n "${OLLAMA_BASE_URL}" && "${OLLAMA_BASE_URL}" != "" ]]; then
-    echo "  ✅ Ollama configured at: ${OLLAMA_BASE_URL}"
+    echo "  ✅ Ollama configured"
     PROVIDER_COUNT=$((PROVIDER_COUNT + 1))
-else
-    echo "  ❌ Ollama not configured"
 fi
 
-echo "🤖 Total AI providers configured: ${PROVIDER_COUNT}"
+echo "🤖 Total providers: ${PROVIDER_COUNT}"
 
-# Step 6: Create comprehensive environment file (using original variable names)
-echo "📝 Creating comprehensive environment configuration..."
+# Step 6: Create .env file for original Open Notebook
+echo "📝 Creating .env for original Open Notebook..."
 
-cat > /app/.env << EOF
-# Original Open Notebook Environment Variables
+cd /app/open-notebook-src
 
-# Security (original variable name)
-OPEN_NOTEBOOK_PASSWORD=${OPEN_NOTEBOOK_PASSWORD}
+cat > .env << EOF
+# Generated by Home Assistant Add-on Interface
+# This file maps HA configuration to original Open Notebook variables
 
-# AI Model API Keys (original variable names)
+# Security (original Open Notebook variable)
+OPEN_NOTEBOOK_PASSWORD=${AUTH_PASSWORD}
+
+# AI API Keys (original Open Notebook variables)
 OPENAI_API_KEY=${OPENAI_API_KEY}
 ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
 GROQ_API_KEY=${GROQ_API_KEY}
@@ -177,117 +148,59 @@ GOOGLE_API_KEY=${GOOGLE_API_KEY}
 MISTRAL_API_KEY=${MISTRAL_API_KEY}
 DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
 
-# Ollama Configuration (original variable name)
+# Ollama (original Open Notebook variable)
 OLLAMA_API_BASE=${OLLAMA_BASE_URL}
 
-# Application Settings
+# Application settings
 DEBUG=${DEBUG}
 LOG_LEVEL=${LOG_LEVEL}
-MAX_FILE_SIZE_MB=${MAX_FILE_SIZE}
 
-# Database Configuration
-DATABASE_URL=${DATABASE_URL}
-
-# Paths
+# Data directories (mapped to Home Assistant paths)
 DATA_DIR=/config/open-notebook/data
-SHARE_DIR=/share/open-notebook
 NOTEBOOKS_DIR=/config/open-notebook/notebooks
 UPLOADS_DIR=/config/open-notebook/uploads
 EXPORTS_DIR=/config/open-notebook/exports
 DOCUMENTS_DIR=/share/open-notebook/documents
 PODCASTS_DIR=/share/open-notebook/podcasts
 MODELS_DIR=/share/open-notebook/models
-
-# Application Configuration
-STREAMLIT_SERVER_PORT=8501
-FASTAPI_SERVER_PORT=8000
-STREAMLIT_SERVER_ADDRESS=0.0.0.0
-FASTAPI_SERVER_ADDRESS=0.0.0.0
-
-# Feature Flags (all enabled in full version)
-ENABLE_DOCUMENT_PROCESSING=true
-ENABLE_PODCAST_PROCESSING=true
-ENABLE_EMBEDDINGS=true
-ENABLE_SEARCH=true
-ENABLE_TRANSFORMATIONS=true
-ENABLE_LANGCHAIN=true
-ENABLE_LANGGRAPH=true
-ENABLE_SURREALDB=true
 EOF
 
-echo "✅ Comprehensive environment file created"
+echo "✅ .env file created for original Open Notebook"
 
-# Step 7: Initialize database (if available)
-echo "🗄️ Checking database initialization..."
-cd /app
-if [ -f "open_notebook/database/migrate.py" ]; then
-    python3 -c "
-import os, sys
-sys.path.insert(0, '/app')
-try:
-    from open_notebook.database.migrate import run_migrations
-    run_migrations()
-    print('✅ Database initialized successfully')
-except Exception as e:
-    print(f'⚠️ Database initialization: {e}')
-" 2>/dev/null || echo "⚠️ Database initialization skipped"
-else
-    echo "⚠️ Database migration not available"
-fi
-
-# Step 8: Configuration summary
-echo "📊 Full Configuration Summary:"
-echo "  🗄️ Database: ${DATABASE_URL}"
-echo "  🐛 Debug: ${DEBUG}"
-echo "  📝 Log Level: ${LOG_LEVEL}"
-echo "  📁 Max File Size: ${MAX_FILE_SIZE}MB"
+# Step 7: Show configuration summary
+echo "📊 Configuration Summary:"
 echo "  🔐 Authentication: ${ENABLE_AUTH}"
 echo "  🤖 AI Providers: ${PROVIDER_COUNT} configured"
-echo "  📄 Document Processing: Enabled"
-echo "  🎙️ Podcast Processing: Enabled"
-echo "  🔍 Search & Embeddings: Enabled"
-echo "  🧠 LangChain: Enabled"
-echo "  🔄 LangGraph: Enabled"
-echo "  🗄️ SurrealDB: Enabled"
+echo "  🐛 Debug: ${DEBUG}"
+echo "  📝 Log Level: ${LOG_LEVEL}"
+echo "  📁 Data: /config/open-notebook/"
+echo "  📂 Shared: /share/open-notebook/"
 
-# Step 9: Validate AI configuration
+# Step 8: Validate setup
 if [[ ${PROVIDER_COUNT} -eq 0 ]]; then
     echo "=========================================="
     echo "⚠️ WARNING: No AI providers configured!"
     echo "=========================================="
-    echo "📍 TO CONFIGURE AI PROVIDERS:"
-    echo "1. Go to: Supervisor → Add-on Store"
-    echo "2. Find: Open Notebook"
-    echo "3. Click: Configuration tab"
-    echo "4. Add your API keys, example:"
+    echo "Configure in: Supervisor → Add-on Store → Open Notebook → Configuration"
     echo ""
-    echo "   openai_api_key: \"sk-your-openai-key-here\""
-    echo "   anthropic_api_key: \"sk-ant-your-anthropic-key\""
-    echo "   groq_api_key: \"gsk_your-groq-key\""
+    echo "Example:"
+    echo "  openai_api_key: \"sk-your-key\""
+    echo "  anthropic_api_key: \"sk-ant-your-key\""
     echo ""
-    echo "5. Click: Save"
-    echo "6. Restart the addon"
-    echo ""
-    echo "🔗 GET API KEYS FROM:"
-    echo "   • OpenAI: https://platform.openai.com/api-keys"
-    echo "   • Anthropic: https://console.anthropic.com/"
-    echo "   • Groq: https://console.groq.com/keys"
-    echo "   • Google AI: https://makersuite.google.com/app/apikey"
+    echo "🔗 Get API keys:"
+    echo "  • OpenAI: https://platform.openai.com/api-keys"
+    echo "  • Anthropic: https://console.anthropic.com/"
+    echo "  • Groq: https://console.groq.com/keys"
     echo "=========================================="
-    echo "   The application will start but AI features will be limited."
-    echo "   Please configure at least one AI API key for full functionality."
 else
-    echo "✅ AI configuration ready - ${PROVIDER_COUNT} provider(s) available"
+    echo "✅ ${PROVIDER_COUNT} AI provider(s) ready!"
 fi
 
-# Step 10: Set comprehensive environment
-export PYTHONPATH="/app"
+# Step 9: Set environment for original Open Notebook
+export PYTHONPATH="/app/open-notebook-src"
 export PYTHONUNBUFFERED=1
-export STREAMLIT_SERVER_HEADLESS=true
-export STREAMLIT_SERVER_ENABLE_CORS=false
-export STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION=false
 
-# Export all environment variables for the applications
+# Export all variables for the original application
 export OPEN_NOTEBOOK_PASSWORD
 export OPENAI_API_KEY
 export ANTHROPIC_API_KEY
@@ -298,29 +211,21 @@ export DEEPSEEK_API_KEY
 export OLLAMA_API_BASE
 export DEBUG
 export LOG_LEVEL
-export DATABASE_URL
 
-# Step 11: Change to app directory
-cd /app
-
-# Step 12: Start comprehensive services
+# Step 10: Start original Open Notebook via supervisor
 echo "=========================================="
-echo "🌟 Starting Open Notebook FULL ORIGINAL"
-echo "⏰ $(date '+%Y-%m-%d %H:%M:%S')"
+echo "🌟 Starting Original Open Notebook"
+echo "📦 Repository: https://github.com/lfnovo/open-notebook"
+echo "🔧 Interface: Home Assistant Add-on"
 echo "=========================================="
-echo "🌐 Streamlit Frontend: http://[HOST]:8501"
-echo "⚡ FastAPI Backend: http://[HOST]:8000"
-echo "🗄️ Database: ${DATABASE_URL}"
-echo "📁 Data Directory: /config/open-notebook"
-echo "📂 Shared Storage: /share/open-notebook"
-echo "🧠 LangChain: Enabled"
-echo "🔄 LangGraph: Enabled"
-echo "🔍 Vector Search: Enabled"
-echo "🎙️ Podcast Processing: Enabled"
-echo "🗄️ SurrealDB: Enabled"
+echo "🌐 Streamlit: http://[HOST]:8501"
+echo "⚡ FastAPI: http://[HOST]:8000"
+echo "📁 Data: /config/open-notebook/"
+echo "📂 Shared: /share/open-notebook/"
 echo "=========================================="
 
-echo "🚀 Launching supervisor with full original services..."
+echo "🚀 Launching original Open Notebook..."
 
-# Start supervisor to manage all services
+# Change to Open Notebook source directory and start
+cd /app/open-notebook-src
 exec supervisord -c /app/supervisord.conf
