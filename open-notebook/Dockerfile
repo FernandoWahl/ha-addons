@@ -77,8 +77,7 @@ RUN pip3 install --no-cache-dir \
     --index-url https://pypi.org/simple \
     --prefer-binary \
     "ai-prompter>=0.3" \
-    "esperanto>=2.3.0" \
-    "podcast-creator>=0.2.0" || echo "Optional packages failed, continuing..."
+    "esperanto>=2.3.0" || echo "Optional packages failed, continuing..."
 
 # Try to install LangGraph (might fail on ARM64, so optional)
 RUN pip3 install --no-cache-dir \

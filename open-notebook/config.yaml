@@ -1,7 +1,7 @@
 name: Open Notebook
-version: "2.0.3"
+version: "2.0.4"
 slug: open_notebook
-description: "Pure interface to original Open Notebook - Fast build without heavy PDF dependencies"
+description: "Pure interface to original Open Notebook - Ultra-fast build without heavy dependencies"
 url: https://github.com/FernandoWahl/ha-addons
 arch:
   - aarch64
