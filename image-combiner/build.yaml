@@ -7,7 +7,7 @@ build_from:
 labels:
   org.opencontainers.image.title: "Image Combiner"
   org.opencontainers.image.description: "API service to combine up to 4 images into a single composite image"
-  org.opencontainers.image.source: "https://github.com/FernandoWahl/image-combiner-addon"
+  org.opencontainers.image.source: "https://github.com/FernandoWahl/ha-addons"
   org.opencontainers.image.licenses: "MIT"
 args:
   TEMPIO_VERSION: "2021.09.0"

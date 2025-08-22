@@ -28,7 +28,7 @@ Este addon transforma seu Home Assistant em um servidor de combinação de image
    - Vá para **Supervisor → Add-on Store**
    - Clique nos três pontos no canto superior direito
    - Selecione **Repositories**
-   - Adicione: `https://github.com/FernandoWahl/image-combiner-addon`
+   - Adicione: `https://github.com/FernandoWahl/ha-addons`
 
 2. **Instale o addon:**
    - Encontre "Image Combiner" na lista de addons
@@ -131,9 +131,9 @@ MIT License - veja [LICENSE](LICENSE) para detalhes.
 [armhf-shield]: https://img.shields.io/badge/armhf-yes-green.svg
 [armv7-shield]: https://img.shields.io/badge/armv7-yes-green.svg
 [i386-shield]: https://img.shields.io/badge/i386-yes-green.svg
-[commits-shield]: https://img.shields.io/github/commit-activity/y/FernandoWahl/image-combiner-addon.svg
-[commits]: https://github.com/FernandoWahl/image-combiner-addon/commits/main
-[license-shield]: https://img.shields.io/github/license/FernandoWahl/image-combiner-addon.svg
-[releases-shield]: https://img.shields.io/github/release/FernandoWahl/image-combiner-addon.svg
-[releases]: https://github.com/FernandoWahl/image-combiner-addon/releases
-[issues]: https://github.com/FernandoWahl/image-combiner-addon/issues
+[commits-shield]: https://img.shields.io/github/commit-activity/y/FernandoWahl/ha-addons.svg
+[commits]: https://github.com/FernandoWahl/ha-addons/commits/main
+[license-shield]: https://img.shields.io/github/license/FernandoWahl/ha-addons.svg
+[releases-shield]: https://img.shields.io/github/release/FernandoWahl/ha-addons.svg
+[releases]: https://github.com/FernandoWahl/ha-addons/releases
+[issues]: https://github.com/FernandoWahl/ha-addons/issues
