@@ -4,10 +4,11 @@ FROM $BUILD_FROM
 # Install curl for SurrealDB installation
 RUN apk add --no-cache curl
 
-# Install SurrealDB
-RUN curl -sSf https://install.surrealdb.com | sh && \
-    mv /root/.surrealdb/surreal /usr/local/bin/surreal && \
-    chmod +x /usr/local/bin/surreal
+# Install SurrealDB (it installs directly to /usr/local/bin/surreal)
+RUN curl -sSf https://install.surrealdb.com | sh
+
+# Verify SurrealDB installation
+RUN surreal version
 
 # Copy run script
 COPY run.sh /
