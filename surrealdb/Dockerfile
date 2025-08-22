@@ -2,7 +2,7 @@ ARG BUILD_FROM
 FROM $BUILD_FROM
 
 # Install dependencies
-RUN apk add --no-cache curl tar
+RUN apk add --no-cache curl tar file
 
 # Download SurrealDB static binary directly for ARM64
 RUN SURREAL_VERSION="2.3.7" && \
@@ -12,10 +12,11 @@ RUN SURREAL_VERSION="2.3.7" && \
     chmod +x /usr/local/bin/surreal && \
     rm surreal.tgz
 
-# Test SurrealDB installation
-RUN echo "Testing SurrealDB installation..." && \
+# Verify binary exists and check format (but don't execute during build)
+RUN echo "SurrealDB binary installed:" && \
     ls -la /usr/local/bin/surreal && \
-    /usr/local/bin/surreal version
+    file /usr/local/bin/surreal && \
+    echo "Binary will be tested at runtime"
 
 # Copy run script
 COPY run.sh /

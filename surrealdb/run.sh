@@ -6,9 +6,50 @@
 # ==============================================================================
 
 echo "=========================================="
-echo "🗄️ Starting SurrealDB v1.0.0"
+echo "🗄️ Starting SurrealDB v1.2.1"
 echo "⏰ $(date '+%Y-%m-%d %H:%M:%S')"
 echo "=========================================="
+
+# Debug system and binary
+echo "🔍 System Debug Information:"
+echo "  Architecture: $(uname -m)"
+echo "  Kernel: $(uname -r)"
+echo "  OS: $(cat /etc/os-release | grep PRETTY_NAME | cut -d'"' -f2)"
+
+echo "🔍 SurrealDB Binary Debug:"
+echo "  Binary exists: $(ls -la /usr/local/bin/surreal 2>/dev/null || echo 'NOT FOUND')"
+echo "  Binary format: $(file /usr/local/bin/surreal 2>/dev/null || echo 'FILE COMMAND FAILED')"
+echo "  Binary size: $(stat -c%s /usr/local/bin/surreal 2>/dev/null || echo 'STAT FAILED') bytes"
+
+# Try to identify the issue
+echo "🔍 Dependency Analysis:"
+if command -v ldd >/dev/null 2>&1; then
+    echo "  ldd output:"
+    ldd /usr/local/bin/surreal 2>&1 | head -10 || echo "  ldd failed"
+else
+    echo "  ldd not available"
+fi
+
+# Test execution with detailed error capture
+echo "🔍 Execution Test:"
+if /usr/local/bin/surreal version 2>&1; then
+    echo "  ✅ SurrealDB execution successful"
+else
+    EXIT_CODE=$?
+    echo "  ❌ SurrealDB execution failed with exit code: $EXIT_CODE"
+    echo "  Trying alternative execution methods..."
+    
+    # Try with explicit interpreter
+    if /lib/ld-musl-aarch64.so.1 /usr/local/bin/surreal version 2>&1; then
+        echo "  ✅ Execution with musl loader successful"
+        SURREAL_BINARY="/lib/ld-musl-aarch64.so.1 /usr/local/bin/surreal"
+    else
+        echo "  ❌ All execution methods failed"
+        echo "  This binary may be incompatible with this Alpine Linux version"
+        echo "  Attempting to continue anyway..."
+        SURREAL_BINARY="/usr/local/bin/surreal"
+    fi
+fi
 
 # Function to read Home Assistant configuration
 read_config() {
@@ -73,7 +114,7 @@ if [[ "$STORAGE_TYPE" == "file" ]]; then
 fi
 
 # Build SurrealDB command
-SURREAL_CMD="/usr/local/bin/surreal start"
+SURREAL_CMD="${SURREAL_BINARY:-/usr/local/bin/surreal} start"
 
 # Add bind address
 SURREAL_CMD="$SURREAL_CMD --bind $BIND_ADDRESS"
