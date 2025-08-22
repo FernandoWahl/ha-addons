@@ -1,5 +1,5 @@
 name: SurrealDB
-version: "1.0.4"
+version: "1.0.5"
 slug: surrealdb
 description: "SurrealDB - A scalable, distributed, collaborative, document-graph database"
 url: "https://github.com/FernandoWahl/ha-addons"

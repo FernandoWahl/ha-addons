@@ -1,8 +1,8 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Install curl and debugging tools
-RUN apk add --no-cache curl file ldd
+# Install curl and debugging tools (ldd is part of musl-utils in Alpine)
+RUN apk add --no-cache curl file musl-utils
 
 # Install SurrealDB and find where it was installed
 RUN curl -sSf https://install.surrealdb.com | sh && \
@@ -26,8 +26,11 @@ RUN echo "=== DEBUGGING SURREAL BINARY ===" && \
     ls -la /usr/local/bin/surreal && \
     file /usr/local/bin/surreal && \
     ldd /usr/local/bin/surreal || echo "ldd failed - static binary or missing libs" && \
+    echo "=== CHECKING SYSTEM INFO ===" && \
+    uname -a && \
+    cat /etc/os-release && \
     echo "=== TRYING TO EXECUTE ===" && \
-    /usr/local/bin/surreal version || echo "Execution failed"
+    /usr/local/bin/surreal version || echo "Execution failed with exit code: $?"
 
 # Copy run script
 COPY run.sh /
