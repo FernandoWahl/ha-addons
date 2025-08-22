@@ -1,7 +1,7 @@
 name: Open Notebook
-version: "0.5.0"
+version: "0.5.1"
 slug: open_notebook
-description: "Full-featured AI-powered research assistant - Complete Open Notebook implementation"
+description: "AI-powered research assistant - ARM64 optimized version"
 url: https://github.com/FernandoWahl/ha-addons
 arch:
   - aarch64
