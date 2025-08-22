@@ -5,7 +5,7 @@
 # ==============================================================================
 
 echo "=========================================="
-echo "🚀 Starting Open Notebook v0.5.1 - ARM64 OPTIMIZED"
+echo "🚀 Starting Open Notebook v0.5.2 - WITH WORKING FASTAPI"
 echo "⏰ $(date '+%Y-%m-%d %H:%M:%S')"
 echo "=========================================="
 

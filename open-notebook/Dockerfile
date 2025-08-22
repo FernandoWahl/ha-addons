@@ -25,21 +25,11 @@ WORKDIR /app
 COPY requirements.txt /tmp/requirements.txt
 RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
 
-# Copy all application files
-COPY open_notebook/ /app/open_notebook/
-COPY api/ /app/api/
-COPY pages/ /app/pages/
-COPY migrations/ /app/migrations/
-COPY commands/ /app/commands/
-COPY prompts/ /app/prompts/
-COPY .streamlit/ /app/.streamlit/
-COPY translations/ /app/translations/
-COPY app_home_original.py /app/app_home.py
+# Copy essential application files
+COPY app_home_working.py /app/app_home.py
 COPY run_api.py /app/
-COPY pyproject.toml /app/
-COPY supervisord.conf /app/
 COPY run.sh /
-COPY logo.png /app/
+COPY supervisord.conf /app/
 
 # Create directories
 RUN mkdir -p /app/logs /app/data /config/open-notebook /share/open-notebook
