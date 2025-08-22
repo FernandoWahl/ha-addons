@@ -5,7 +5,7 @@
 # ==============================================================================
 
 echo "=========================================="
-echo "🚀 Starting Open Notebook v0.5.2 - WITH WORKING FASTAPI"
+echo "🚀 Starting Open Notebook v0.5.3 - SECURE & DEBUGGABLE"
 echo "⏰ $(date '+%Y-%m-%d %H:%M:%S')"
 echo "=========================================="
 
@@ -30,25 +30,41 @@ echo "⚙️ Reading configuration from Home Assistant..."
 read_config() {
     local key="$1"
     local default="$2"
+    local value=""
     
+    # Try bashio first
     if command -v bashio >/dev/null 2>&1; then
-        bashio::config "$key" "$default" 2>/dev/null || echo "$default"
-    else
-        # Fallback: try to read from options.json
-        if [ -f "/data/options.json" ]; then
-            python3 -c "
+        value=$(bashio::config "$key" "$default" 2>/dev/null)
+        if [[ -n "$value" && "$value" != "$default" ]]; then
+            echo "$value"
+            return
+        fi
+    fi
+    
+    # Fallback: try to read from options.json
+    if [ -f "/data/options.json" ]; then
+        value=$(python3 -c "
 import json, sys
 try:
     with open('/data/options.json') as f:
         data = json.load(f)
-    print(data.get('$key', '$default'))
-except:
+    result = data.get('$key', '$default')
+    if result and result != '$default':
+        print(result)
+    else:
+        print('$default')
+except Exception as e:
     print('$default')
-" 2>/dev/null || echo "$default"
-        else
-            echo "$default"
+" 2>/dev/null)
+        
+        if [[ -n "$value" ]]; then
+            echo "$value"
+            return
         fi
     fi
+    
+    # Final fallback
+    echo "$default"
 }
 
 DATABASE_URL=$(read_config 'database_url' 'file:///config/open-notebook/data/database.db')
@@ -74,37 +90,65 @@ AUTH_PASSWORD=$(read_config 'auth_password' '')
 
 echo "✅ Configuration loaded successfully"
 
-# Step 4: Count configured providers
+# Step 4: Debug configuration values
+echo "🔍 Debug - Configuration values loaded:"
+echo "  📊 DEBUG: '${DEBUG}'"
+echo "  📝 LOG_LEVEL: '${LOG_LEVEL}'"
+echo "  🤖 OPENAI_API_KEY: '${OPENAI_API_KEY:0:10}...'" 
+echo "  🤖 ANTHROPIC_API_KEY: '${ANTHROPIC_API_KEY:0:10}...'"
+echo "  🤖 GROQ_API_KEY: '${GROQ_API_KEY:0:10}...'"
+
+# Step 5: Count configured providers
 echo "🤖 Checking AI provider configurations..."
 PROVIDER_COUNT=0
 
-if [[ -n "${OPENAI_API_KEY}" ]]; then
-    echo "  ✅ OpenAI API configured"
+if [[ -n "${OPENAI_API_KEY}" && "${OPENAI_API_KEY}" != "" ]]; then
+    echo "  ✅ OpenAI API configured (${#OPENAI_API_KEY} chars)"
     PROVIDER_COUNT=$((PROVIDER_COUNT + 1))
+else
+    echo "  ❌ OpenAI API not configured"
 fi
-if [[ -n "${ANTHROPIC_API_KEY}" ]]; then
-    echo "  ✅ Anthropic API configured"
+
+if [[ -n "${ANTHROPIC_API_KEY}" && "${ANTHROPIC_API_KEY}" != "" ]]; then
+    echo "  ✅ Anthropic API configured (${#ANTHROPIC_API_KEY} chars)"
     PROVIDER_COUNT=$((PROVIDER_COUNT + 1))
+else
+    echo "  ❌ Anthropic API not configured"
 fi
-if [[ -n "${GROQ_API_KEY}" ]]; then
-    echo "  ✅ Groq API configured"
+
+if [[ -n "${GROQ_API_KEY}" && "${GROQ_API_KEY}" != "" ]]; then
+    echo "  ✅ Groq API configured (${#GROQ_API_KEY} chars)"
     PROVIDER_COUNT=$((PROVIDER_COUNT + 1))
+else
+    echo "  ❌ Groq API not configured"
 fi
-if [[ -n "${GOOGLE_API_KEY}" ]]; then
-    echo "  ✅ Google AI API configured"
+
+if [[ -n "${GOOGLE_API_KEY}" && "${GOOGLE_API_KEY}" != "" ]]; then
+    echo "  ✅ Google AI API configured (${#GOOGLE_API_KEY} chars)"
     PROVIDER_COUNT=$((PROVIDER_COUNT + 1))
+else
+    echo "  ❌ Google AI API not configured"
 fi
-if [[ -n "${MISTRAL_API_KEY}" ]]; then
-    echo "  ✅ Mistral AI API configured"
+
+if [[ -n "${MISTRAL_API_KEY}" && "${MISTRAL_API_KEY}" != "" ]]; then
+    echo "  ✅ Mistral AI API configured (${#MISTRAL_API_KEY} chars)"
     PROVIDER_COUNT=$((PROVIDER_COUNT + 1))
+else
+    echo "  ❌ Mistral AI API not configured"
 fi
-if [[ -n "${DEEPSEEK_API_KEY}" ]]; then
-    echo "  ✅ DeepSeek API configured"
+
+if [[ -n "${DEEPSEEK_API_KEY}" && "${DEEPSEEK_API_KEY}" != "" ]]; then
+    echo "  ✅ DeepSeek API configured (${#DEEPSEEK_API_KEY} chars)"
     PROVIDER_COUNT=$((PROVIDER_COUNT + 1))
+else
+    echo "  ❌ DeepSeek API not configured"
 fi
-if [[ -n "${OLLAMA_BASE_URL}" ]]; then
+
+if [[ -n "${OLLAMA_BASE_URL}" && "${OLLAMA_BASE_URL}" != "" ]]; then
     echo "  ✅ Ollama configured at: ${OLLAMA_BASE_URL}"
     PROVIDER_COUNT=$((PROVIDER_COUNT + 1))
+else
+    echo "  ❌ Ollama not configured"
 fi
 
 echo "🤖 Total AI providers configured: ${PROVIDER_COUNT}"
@@ -197,9 +241,30 @@ echo "  🔍 Search & Embeddings: Enabled"
 
 # Step 8: Validate AI configuration
 if [[ ${PROVIDER_COUNT} -eq 0 ]]; then
+    echo "=========================================="
     echo "⚠️ WARNING: No AI providers configured!"
-    echo "   Please configure at least one AI API key for full functionality"
-    echo "   Add keys in: Supervisor → Add-on Store → Open Notebook → Configuration"
+    echo "=========================================="
+    echo "📍 TO CONFIGURE AI PROVIDERS:"
+    echo "1. Go to: Supervisor → Add-on Store"
+    echo "2. Find: Open Notebook"
+    echo "3. Click: Configuration tab"
+    echo "4. Add your API keys, example:"
+    echo ""
+    echo "   openai_api_key: \"sk-your-openai-key-here\""
+    echo "   anthropic_api_key: \"sk-ant-your-anthropic-key\""
+    echo "   groq_api_key: \"gsk_your-groq-key\""
+    echo ""
+    echo "5. Click: Save"
+    echo "6. Restart the addon"
+    echo ""
+    echo "🔗 GET API KEYS FROM:"
+    echo "   • OpenAI: https://platform.openai.com/api-keys"
+    echo "   • Anthropic: https://console.anthropic.com/"
+    echo "   • Groq: https://console.groq.com/keys"
+    echo "   • Google AI: https://makersuite.google.com/app/apikey"
+    echo "=========================================="
+    echo "   The application will start but AI features will be limited."
+    echo "   Please configure at least one AI API key for full functionality."
 else
     echo "✅ AI configuration ready - ${PROVIDER_COUNT} provider(s) available"
 fi

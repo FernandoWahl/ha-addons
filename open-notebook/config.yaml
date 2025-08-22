@@ -1,5 +1,5 @@
 name: Open Notebook
-version: "0.5.2"
+version: "0.5.3"
 slug: open_notebook
 description: "AI-powered research assistant with working FastAPI backend"
 url: https://github.com/FernandoWahl/ha-addons
@@ -49,13 +49,13 @@ options:
 schema:
   database_url: str
   database_user: str
-  database_password: str
-  openai_api_key: str?
-  anthropic_api_key: str?
-  groq_api_key: str?
-  google_api_key: str?
-  mistral_api_key: str?
-  deepseek_api_key: str?
+  database_password: password
+  openai_api_key: password?
+  anthropic_api_key: password?
+  groq_api_key: password?
+  google_api_key: password?
+  mistral_api_key: password?
+  deepseek_api_key: password?
   ollama_base_url: str?
   debug: bool
   log_level: match(DEBUG|INFO|WARNING|ERROR)
@@ -63,7 +63,7 @@ schema:
   allowed_file_types: [str]
   enable_auth: bool
   auth_username: str?
-  auth_password: str?
+  auth_password: password?
 
 map:
   - share:rw

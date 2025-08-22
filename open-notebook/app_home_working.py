@@ -54,7 +54,45 @@ if page == "🏠 Home":
                 st.write(f"❌ {name}: Not configured")
         
         if configured_count == 0:
-            st.warning("⚠️ No AI providers configured. Please add API keys in the addon configuration.")
+            st.error("⚠️ **No AI providers configured!**")
+            
+            with st.expander("📍 **HOW TO CONFIGURE AI PROVIDERS**", expanded=True):
+                st.write("**Step 1: Go to Addon Configuration**")
+                st.code("Supervisor → Add-on Store → Open Notebook → Configuration tab")
+                
+                st.write("**Step 2: Add your API keys**")
+                st.code("""
+# Example configuration:
+openai_api_key: "sk-your-openai-key-here"
+anthropic_api_key: "sk-ant-your-anthropic-key"
+groq_api_key: "gsk_your-groq-key"
+google_api_key: "your-google-ai-key"
+
+# Optional settings:
+debug: false
+log_level: "INFO"
+max_file_size: 50
+""", language="yaml")
+                
+                st.write("**Step 3: Get API keys from providers**")
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    st.write("🔗 [OpenAI API Keys](https://platform.openai.com/api-keys)")
+                    st.write("🔗 [Anthropic Console](https://console.anthropic.com/)")
+                    st.write("🔗 [Groq Console](https://console.groq.com/keys)")
+                with col_b:
+                    st.write("🔗 [Google AI Studio](https://makersuite.google.com/app/apikey)")
+                    st.write("🔗 [Mistral AI](https://console.mistral.ai/)")
+                    st.write("🔗 [DeepSeek](https://platform.deepseek.com/)")
+                
+                st.write("**Step 4: Save and restart**")
+                st.write("1. Click **Save** in the configuration")
+                st.write("2. Go to **Info** tab")
+                st.write("3. Click **Restart**")
+                st.write("4. Wait for restart to complete")
+                st.write("5. Refresh this page")
+                
+            st.warning("🚨 **AI features are disabled until you configure at least one provider!**")
         else:
             st.success(f"🎉 {configured_count} AI provider(s) ready!")
     

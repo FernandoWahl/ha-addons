@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Open Notebook API",
     description="Backend API for Open Notebook - AI-powered research assistant",
-    version="0.5.2"
+    version="0.5.3"
 )
 
 # Add CORS middleware
@@ -100,7 +100,7 @@ async def startup_event():
 async def root():
     return {
         "message": "Open Notebook API",
-        "version": "0.5.2",
+        "version": "0.5.3",
         "status": "running",
         "endpoints": {
             "health": "/health",
@@ -115,7 +115,7 @@ async def root():
 async def health_check():
     return {
         "status": "healthy",
-        "version": "0.5.2",
+        "version": "0.5.3",
         "timestamp": "2025-08-22T17:44:00Z",
         "services": {
             "api": "running",
