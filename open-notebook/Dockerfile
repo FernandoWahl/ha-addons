@@ -76,7 +76,6 @@ RUN pip3 install --no-cache-dir \
 RUN pip3 install --no-cache-dir \
     --index-url https://pypi.org/simple \
     --prefer-binary \
-    "content-core>=1.0.0" \
     "ai-prompter>=0.3" \
     "esperanto>=2.3.0" \
     "podcast-creator>=0.2.0" || echo "Optional packages failed, continuing..."

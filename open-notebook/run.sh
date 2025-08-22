@@ -7,7 +7,7 @@
 # ==============================================================================
 
 echo "=========================================="
-echo "🚀 Open Notebook Interface v2.0.2"
+echo "🚀 Open Notebook Interface v2.0.3"
 echo "📦 Using Original Open Notebook (unmodified)"
 echo "⏰ $(date '+%Y-%m-%d %H:%M:%S')"
 echo "=========================================="
