@@ -1,7 +1,7 @@
 name: Open Notebook
-version: "2.0.0"
+version: "2.0.1"
 slug: open_notebook
-description: "Pure interface to original Open Notebook - No modifications, full compatibility, easy updates"
+description: "Pure interface to original Open Notebook - ARM64 compatible dependencies"
 url: https://github.com/FernandoWahl/ha-addons
 arch:
   - aarch64
