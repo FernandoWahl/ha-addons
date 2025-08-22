@@ -1,5 +1,5 @@
 name: Open Notebook
-version: "0.4.0"
+version: "0.4.1"
 slug: open_notebook
 description: An open source, privacy-focused alternative to Google's Notebook LM for research and note-taking
 url: https://github.com/FernandoWahl/ha-addons
