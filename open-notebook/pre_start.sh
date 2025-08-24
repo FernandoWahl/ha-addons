@@ -467,6 +467,32 @@ else
     echo "❌ run_api.py not found"
 fi
 
+# Fix API client configuration
+echo "🔧 Fixing API client configuration..."
+if [ -f "/app/open-notebook-src/api/client.py" ]; then
+    # Create backup
+    cp "/app/open-notebook-src/api/client.py" "/app/open-notebook-src/api/client.py.backup"
+    
+    # Replace all occurrences of port 5055 with 8000 in client
+    sed -i 's/5055/8000/g' /app/open-notebook-src/api/client.py
+    sed -i 's/127\.0\.0\.1/localhost/g' /app/open-notebook-src/api/client.py
+    
+    # Also check for any hardcoded URLs
+    sed -i 's|http://127\.0\.0\.1:5055|http://localhost:8000|g' /app/open-notebook-src/api/client.py
+    sed -i 's|http://localhost:5055|http://localhost:8000|g' /app/open-notebook-src/api/client.py
+    
+    echo "✅ Fixed API client configuration"
+else
+    echo "❌ client.py not found"
+fi
+
+# Check for any other files that might have the old port
+echo "🔍 Checking for other files with port 5055..."
+find /app/open-notebook-src -name "*.py" -exec grep -l "5055" {} \; 2>/dev/null | while read file; do
+    echo "📝 Fixing port in $file"
+    sed -i 's/5055/8000/g' "$file"
+done
+
 # Also check if there's a config file or environment variable setting the port
 if [ -f "/app/open-notebook-src/.env" ]; then
     echo "🔧 Checking .env file for port settings..."
@@ -477,11 +503,13 @@ fi
 export API_PORT=8000
 export HOST=0.0.0.0
 export PORT=8000
+export API_BASE_URL=http://localhost:8000
 
 echo "🌐 Environment variables set:"
 echo "  API_PORT=8000"
 echo "  HOST=0.0.0.0"
 echo "  PORT=8000"
+echo "  API_BASE_URL=http://localhost:8000"
 
 echo "🐍 Environment configured for PostgreSQL"
 echo "🗄️ Database mode: PostgreSQL"
