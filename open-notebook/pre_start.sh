@@ -517,7 +517,7 @@ if [ -f "/app/open-notebook-src/api/routers/models.py" ]; then
     # Create backup
     cp "/app/open-notebook-src/api/routers/models.py" "/app/open-notebook-src/api/routers/models.py.backup"
     
-    # Create a simple patch to return mock default models
+    # Create a comprehensive patch for all models endpoints
     cat > /tmp/patch_models.py << 'EOF'
 import re
 
@@ -527,10 +527,10 @@ def patch_models():
     with open(file_path, 'r') as f:
         content = f.read()
     
-    # Find the get_default_models function and replace it with a PostgreSQL-compatible version
-    pattern = r'async def get_default_models\(\):(.*?)(?=\nasync def|\n@|\nclass|\Z)'
+    # Patch get_default_models function
+    default_models_pattern = r'async def get_default_models\(\):(.*?)(?=\nasync def|\n@|\nclass|\Z)'
     
-    replacement = '''async def get_default_models():
+    default_models_replacement = '''async def get_default_models():
     """Get default models - PostgreSQL compatible version"""
     import os
     
@@ -566,12 +566,85 @@ def patch_models():
     
     # Original WebSocket logic (only for SurrealDB users)'''
     
-    # Replace the function
-    new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+    # Patch get_models function (the one causing the current error)
+    get_models_pattern = r'async def get_models\([^)]*\):(.*?)(?=\nasync def|\n@|\nclass|\Z)'
     
-    # If no replacement was made, try to find and patch the function differently
+    get_models_replacement = '''async def get_models(model_type: str = None):
+    """Get all models - PostgreSQL compatible version"""
+    import os
+    
+    # Skip WebSocket connection if using PostgreSQL
+    if os.getenv('USE_POSTGRESQL', 'false').lower() == 'true':
+        all_models = [
+            {
+                "id": "gpt-3.5-turbo",
+                "name": "GPT-3.5 Turbo",
+                "provider": "openai",
+                "type": "chat",
+                "context_length": 4096,
+                "available": True
+            },
+            {
+                "id": "gpt-4",
+                "name": "GPT-4",
+                "provider": "openai",
+                "type": "chat",
+                "context_length": 8192,
+                "available": True
+            },
+            {
+                "id": "gpt-4-turbo",
+                "name": "GPT-4 Turbo",
+                "provider": "openai",
+                "type": "chat",
+                "context_length": 128000,
+                "available": True
+            },
+            {
+                "id": "claude-3-sonnet",
+                "name": "Claude 3 Sonnet",
+                "provider": "anthropic",
+                "type": "chat",
+                "context_length": 200000,
+                "available": True
+            },
+            {
+                "id": "claude-3-haiku",
+                "name": "Claude 3 Haiku",
+                "provider": "anthropic",
+                "type": "chat",
+                "context_length": 200000,
+                "available": True
+            },
+            {
+                "id": "gemini-pro",
+                "name": "Gemini Pro",
+                "provider": "google",
+                "type": "chat",
+                "context_length": 32768,
+                "available": True
+            }
+        ]
+        
+        # Filter by model_type if specified
+        if model_type:
+            all_models = [m for m in all_models if m.get("type") == model_type]
+        
+        return {
+            "models": all_models,
+            "total": len(all_models),
+            "source": "postgresql_mock"
+        }
+    
+    # Original WebSocket logic (only for SurrealDB users)'''
+    
+    # Apply patches
+    new_content = re.sub(default_models_pattern, default_models_replacement, content, flags=re.DOTALL)
+    new_content = re.sub(get_models_pattern, get_models_replacement, new_content, flags=re.DOTALL)
+    
+    # If regex didn't work, try simpler replacements
     if new_content == content:
-        # Look for the function definition and add our check at the beginning
+        # Add PostgreSQL checks at the beginning of functions
         if 'async def get_default_models():' in content:
             content = content.replace(
                 'async def get_default_models():',
@@ -583,26 +656,37 @@ def patch_models():
     if os.getenv('USE_POSTGRESQL', 'false').lower() == 'true':
         return {
             "models": [
-                {
-                    "id": "gpt-3.5-turbo",
-                    "name": "GPT-3.5 Turbo",
-                    "provider": "openai",
-                    "type": "chat",
-                    "default": True
-                },
-                {
-                    "id": "gpt-4",
-                    "name": "GPT-4",
-                    "provider": "openai", 
-                    "type": "chat",
-                    "default": False
-                }
+                {"id": "gpt-3.5-turbo", "name": "GPT-3.5 Turbo", "provider": "openai", "type": "chat", "default": True},
+                {"id": "gpt-4", "name": "GPT-4", "provider": "openai", "type": "chat", "default": False}
             ],
             "default_model": "gpt-3.5-turbo",
             "source": "postgresql_mock"
         }'''
             )
-            new_content = content
+        
+        if 'async def get_models(' in content:
+            content = content.replace(
+                'async def get_models(',
+                '''async def get_models(model_type: str = None):
+    """Get all models - PostgreSQL compatible version"""
+    import os
+    
+    # Skip WebSocket connection if using PostgreSQL
+    if os.getenv('USE_POSTGRESQL', 'false').lower() == 'true':
+        models = [
+            {"id": "gpt-3.5-turbo", "name": "GPT-3.5 Turbo", "provider": "openai", "type": "chat", "available": True},
+            {"id": "gpt-4", "name": "GPT-4", "provider": "openai", "type": "chat", "available": True},
+            {"id": "claude-3-sonnet", "name": "Claude 3 Sonnet", "provider": "anthropic", "type": "chat", "available": True}
+        ]
+        if model_type:
+            models = [m for m in models if m.get("type") == model_type]
+        return {"models": models, "total": len(models), "source": "postgresql_mock"}
+    
+    # Original function continues here
+async def get_models_original('''
+            )
+        
+        new_content = content
     
     with open(file_path, 'w') as f:
         f.write(new_content)
