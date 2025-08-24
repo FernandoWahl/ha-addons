@@ -279,9 +279,14 @@ EOF
 echo "✅ Created mock surreal_commands module with registry"
 
 # Create mock content_core module
-echo "📦 Creating mock content_core module..."
-cat > /app/open-notebook-src/content_core.py << 'EOF'
-"""Mock content_core module for PostgreSQL compatibility"""
+echo "📦 Creating mock content_core package..."
+
+# Create content_core package directory
+mkdir -p /app/open-notebook-src/content_core
+
+# Create __init__.py for the package
+cat > /app/open-notebook-src/content_core/__init__.py << 'EOF'
+"""Mock content_core package for PostgreSQL compatibility"""
 
 def extract_content(source, *args, **kwargs):
     """Mock function for content extraction"""
@@ -335,7 +340,97 @@ def extract_metadata(*args, **kwargs):
     return {"metadata": "Mock metadata", "source": "mock"}
 EOF
 
-echo "✅ Created mock content_core module"
+# Create common.py submodule
+cat > /app/open-notebook-src/content_core/common.py << 'EOF'
+"""Mock content_core.common module"""
+
+from enum import Enum
+from typing import Dict, Any, Optional
+
+class ProcessSourceState(Enum):
+    """Mock ProcessSourceState enum"""
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+class SourceType(Enum):
+    """Mock SourceType enum"""
+    TEXT = "text"
+    PDF = "pdf"
+    HTML = "html"
+    MARKDOWN = "markdown"
+    DOCUMENT = "document"
+
+class ContentProcessor:
+    """Mock ContentProcessor class"""
+    
+    def __init__(self):
+        self.state = ProcessSourceState.PENDING
+    
+    def process(self, source: Any) -> Dict[str, Any]:
+        """Mock process method"""
+        self.state = ProcessSourceState.PROCESSING
+        result = {
+            "content": str(source),
+            "state": self.state.value,
+            "metadata": {"processor": "mock"},
+            "success": True
+        }
+        self.state = ProcessSourceState.COMPLETED
+        return result
+    
+    def get_state(self) -> ProcessSourceState:
+        """Get current processing state"""
+        return self.state
+
+# Mock functions that might be imported
+def create_processor(*args, **kwargs) -> ContentProcessor:
+    """Create a mock content processor"""
+    return ContentProcessor()
+
+def validate_source(source: Any) -> bool:
+    """Mock source validation"""
+    return True
+
+def get_source_type(source: Any) -> SourceType:
+    """Mock source type detection"""
+    return SourceType.TEXT
+EOF
+
+# Create any other submodules that might be needed
+cat > /app/open-notebook-src/content_core/extractors.py << 'EOF'
+"""Mock content_core.extractors module"""
+
+class BaseExtractor:
+    """Mock base extractor class"""
+    
+    def extract(self, source):
+        return {"extracted": True, "content": str(source)}
+
+class TextExtractor(BaseExtractor):
+    """Mock text extractor"""
+    pass
+
+class PDFExtractor(BaseExtractor):
+    """Mock PDF extractor"""
+    pass
+
+class HTMLExtractor(BaseExtractor):
+    """Mock HTML extractor"""
+    pass
+
+# Factory function
+def get_extractor(source_type):
+    """Get appropriate extractor for source type"""
+    return TextExtractor()
+EOF
+
+# Remove the old single file if it exists
+rm -f /app/open-notebook-src/content_core.py 2>/dev/null || true
+
+echo "✅ Created mock content_core package with submodules"
 
 # Fix API port configuration - more comprehensive approach
 echo "🔧 Fixing API port configuration..."
