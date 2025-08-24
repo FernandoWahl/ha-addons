@@ -109,12 +109,13 @@ WORKDIR /app
 COPY run.sh /
 COPY supervisord_interface.conf /app/supervisord.conf
 COPY patch_migrations.py /app/patch_migrations.py
+COPY pre_start.sh /app/pre_start.sh
 
 # Create directories for Home Assistant integration
 RUN mkdir -p /app/logs /config/open-notebook /share/open-notebook /data
 
 # Set permissions
-RUN chmod +x /run.sh
+RUN chmod +x /run.sh /app/pre_start.sh
 
 # Expose ports
 EXPOSE 8501 8000

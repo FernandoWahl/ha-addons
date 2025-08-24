@@ -170,9 +170,9 @@ EOF
 
 echo "✅ Configuration created successfully"
 
-# Apply patches to disable SurrealDB migrations
-echo "🔧 Applying PostgreSQL compatibility patches..."
-python3 /app/patch_migrations.py
+# Run pre-start setup for PostgreSQL compatibility
+echo "🔧 Running PostgreSQL compatibility setup..."
+source /app/pre_start.sh
 
 # Show configuration summary (without sensitive data)
 echo "📊 Configuration Summary:"
