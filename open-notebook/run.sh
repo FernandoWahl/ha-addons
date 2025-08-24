@@ -110,7 +110,7 @@ echo "✅ Configuration created successfully"
 
 # Run PostgreSQL compatibility setup
 echo "🔧 Running PostgreSQL compatibility setup..."
-python3 /app/pre_start.sh
+bash /app/pre_start.sh
 echo "✅ PostgreSQL compatibility setup completed"
 
 # Copy safe execution scripts if they exist
