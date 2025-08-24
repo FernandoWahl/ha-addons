@@ -129,12 +129,14 @@ cat > .env << EOF
 # Database Configuration
 DATABASE_URL=${DATABASE_URL}
 
-# SurrealDB Configuration (for compatibility)
-SURREALDB_URL=ws://localhost:8000/rpc
+# SurrealDB Configuration (disabled - using PostgreSQL)
+SURREALDB_URL=disabled
 SURREALDB_USER=root
 SURREALDB_PASSWORD=root
 SURREALDB_NAMESPACE=open_notebook
 SURREALDB_DATABASE=main
+USE_SURREALDB=false
+SKIP_SURREALDB_MIGRATION=true
 
 # AI Model API Keys
 OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -160,9 +162,17 @@ AUTH_PASSWORD=${AUTH_PASSWORD}
 # Paths
 DATA_PATH=/data
 LOGS_PATH=/app/logs
+
+# Force PostgreSQL/SQLite usage
+USE_POSTGRESQL=true
+DISABLE_SURREALDB=true
 EOF
 
 echo "✅ Configuration created successfully"
+
+# Apply patches to disable SurrealDB migrations
+echo "🔧 Applying PostgreSQL compatibility patches..."
+python3 /app/patch_migrations.py
 
 # Show configuration summary (without sensitive data)
 echo "📊 Configuration Summary:"

@@ -108,6 +108,7 @@ WORKDIR /app
 # Copy our interface files
 COPY run.sh /
 COPY supervisord_interface.conf /app/supervisord.conf
+COPY patch_migrations.py /app/patch_migrations.py
 
 # Create directories for Home Assistant integration
 RUN mkdir -p /app/logs /config/open-notebook /share/open-notebook /data
