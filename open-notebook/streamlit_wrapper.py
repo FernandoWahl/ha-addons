@@ -49,7 +49,7 @@ def main():
         # Use streamlit run instead of direct import
         cmd = [
             sys.executable, '-m', 'streamlit', 'run', 'app_home.py',
-            '--server.port=8501',
+            '--server.port=8502',
             '--server.address=0.0.0.0',
             '--server.headless=true',
             '--server.enableCORS=false',

@@ -191,7 +191,7 @@ mkdir -p /data /app/logs
 # Start services with supervisor
 echo "=========================================="
 echo "🚀 Starting Open Notebook services..."
-echo "🌐 Streamlit UI: http://[HOST]:8501"
+echo "🌐 Streamlit UI: http://[HOST]:8502"
 echo "🔌 FastAPI: http://[HOST]:8000"
 echo "=========================================="
 

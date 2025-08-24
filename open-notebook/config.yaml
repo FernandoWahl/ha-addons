@@ -1,5 +1,5 @@
 name: Open Notebook
-version: "3.2.0"
+version: "3.2.1"
 slug: open_notebook
 description: "Pure interface to original Open Notebook - PostgreSQL compatible"
 url: https://github.com/FernandoWahl/ha-addons
@@ -10,7 +10,7 @@ startup: services
 boot: auto
 init: false
 ports:
-  8501/tcp: 8501
+  8502/tcp: 8502
   8000/tcp: 8000
 ports_description:
   8501/tcp: Streamlit Web Interface
