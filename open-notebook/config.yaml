@@ -1,7 +1,7 @@
 name: Open Notebook
-version: "2.0.5"
+version: "3.0.0"
 slug: open_notebook
-description: "Pure interface to original Open Notebook - Complete with SurrealDB service"
+description: "Pure interface to original Open Notebook - PostgreSQL compatible"
 url: https://github.com/FernandoWahl/ha-addons
 arch:
   - aarch64
@@ -20,9 +20,12 @@ panel_icon: mdi:notebook-outline
 panel_title: Open Notebook
 options:
   # Database Configuration
-  database_url: "memory"
-  database_user: "root"
-  database_password: "root"
+  database_type: "postgresql"
+  postgres_host: ""
+  postgres_port: 5432
+  postgres_database: "open_notebook"
+  postgres_user: ""
+  postgres_password: ""
   
   # AI Model Configuration
   openai_api_key: ""
@@ -47,9 +50,15 @@ options:
   auth_password: ""
 
 schema:
-  database_url: str
-  database_user: str
-  database_password: password
+  # Database Configuration
+  database_type: match(postgresql|sqlite)
+  postgres_host: str?
+  postgres_port: int(1,65535)?
+  postgres_database: str?
+  postgres_user: str?
+  postgres_password: password?
+  
+  # AI Model Configuration
   openai_api_key: password?
   anthropic_api_key: password?
   groq_api_key: password?
@@ -57,6 +66,8 @@ schema:
   mistral_api_key: password?
   deepseek_api_key: password?
   ollama_base_url: str?
+  
+  # Application Settings
   debug: bool
   log_level: match(DEBUG|INFO|WARNING|ERROR)
   max_file_size: int(1,500)
@@ -69,3 +80,4 @@ map:
   - share:rw
   - config:rw
   - media:rw
+  - data:rw
