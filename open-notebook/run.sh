@@ -7,44 +7,15 @@ echo "⏰ $(date)"
 echo "🗄️ PostgreSQL Compatible Version with SIGILL Protection"
 echo "=========================================="
 
-# Read configuration
+# Read configuration - prioritize manual config over services
 echo "⚙️ Reading database configuration..."
 
-# Try to get PostgreSQL configuration from services first, then fallback to manual config
-if bashio::services.available "postgres"; then
-    echo "📡 Using PostgreSQL service configuration..."
-    DB_HOST=$(bashio::services "postgres" "host")
-    DB_PORT=$(bashio::services "postgres" "port")
-    DB_USERNAME=$(bashio::services "postgres" "username")
-    DB_PASSWORD=$(bashio::services "postgres" "password")
-else
-    echo "📝 Using manual PostgreSQL configuration..."
-    DB_HOST=$(bashio::config 'postgres_host' 'localhost')
-    DB_PORT=$(bashio::config 'postgres_port' '5432')
-    DB_USERNAME=$(bashio::config 'postgres_user' 'postgres')
-    DB_PASSWORD=$(bashio::config 'postgres_password' '')
-fi
-
+# Always use manual configuration from addon options
+DB_HOST=$(bashio::config 'postgres_host' '')
+DB_PORT=$(bashio::config 'postgres_port' '5432')
+DB_USERNAME=$(bashio::config 'postgres_user' '')
+DB_PASSWORD=$(bashio::config 'postgres_password' '')
 DB_DATABASE=$(bashio::config 'postgres_database' 'open_notebook')
-
-# Validate configuration
-if [ -z "$DB_HOST" ] || [ -z "$DB_USERNAME" ] || [ -z "$DB_PASSWORD" ]; then
-    echo "❌ PostgreSQL configuration incomplete!"
-    echo "   Host: $DB_HOST"
-    echo "   Port: $DB_PORT"
-    echo "   Username: $DB_USERNAME"
-    echo "   Password: $([ -n "$DB_PASSWORD" ] && echo "***" || echo "NOT SET")"
-    echo ""
-    echo "🔧 Please configure PostgreSQL in the addon options:"
-    echo "   - postgres_host: Your PostgreSQL server hostname"
-    echo "   - postgres_port: PostgreSQL port (default: 5432)"
-    echo "   - postgres_user: Database username"
-    echo "   - postgres_password: Database password"
-    echo "   - postgres_database: Database name (default: open_notebook)"
-    echo ""
-    echo "💡 Or install and configure the PostgreSQL addon from Home Assistant"
-    exit 1
-fi
 
 echo "⚙️ Reading application configuration..."
 OPENAI_API_KEY=$(bashio::config 'openai_api_key' '')
@@ -52,8 +23,26 @@ ANTHROPIC_API_KEY=$(bashio::config 'anthropic_api_key' '')
 GROQ_API_KEY=$(bashio::config 'groq_api_key' '')
 GOOGLE_API_KEY=$(bashio::config 'google_api_key' '')
 OLLAMA_BASE_URL=$(bashio::config 'ollama_base_url' '')
-AUTH_ENABLED=$(bashio::config 'auth_enabled' 'false')
-DEBUG_MODE=$(bashio::config 'debug_mode' 'true')
+AUTH_ENABLED=$(bashio::config 'enable_auth' 'false')
+DEBUG_MODE=$(bashio::config 'debug' 'true')
+
+# Validate PostgreSQL configuration
+if [ -z "$DB_HOST" ] || [ -z "$DB_USERNAME" ] || [ -z "$DB_PASSWORD" ]; then
+    echo "❌ PostgreSQL configuration incomplete!"
+    echo "   Host: '$DB_HOST'"
+    echo "   Port: '$DB_PORT'"
+    echo "   Username: '$DB_USERNAME'"
+    echo "   Password: $([ -n "$DB_PASSWORD" ] && echo "***" || echo "NOT SET")"
+    echo "   Database: '$DB_DATABASE'"
+    echo ""
+    echo "🔧 Please configure PostgreSQL in the addon options:"
+    echo "   - postgres_host: addon_db21ed7f_postgres_latest"
+    echo "   - postgres_port: 5432"
+    echo "   - postgres_user: postgres"
+    echo "   - postgres_password: homeassistant"
+    echo "   - postgres_database: open_notebook"
+    exit 1
+fi
 
 # Construct PostgreSQL connection string
 POSTGRES_URL="postgresql://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}"
@@ -124,11 +113,13 @@ echo "🔧 Running PostgreSQL compatibility setup..."
 python3 /app/pre_start.sh
 echo "✅ PostgreSQL compatibility setup completed"
 
-# Copy safe execution scripts
-echo "📦 Installing SIGILL protection scripts..."
-cp /app/streamlit_safe.py /app/open-notebook-src/
-cp /app/fallback_server.py /app/open-notebook-src/
-echo "✅ Protection scripts installed"
+# Copy safe execution scripts if they exist
+if [ -f "/app/streamlit_safe.py" ]; then
+    echo "📦 Installing SIGILL protection scripts..."
+    cp /app/streamlit_safe.py /app/open-notebook-src/
+    cp /app/fallback_server.py /app/open-notebook-src/
+    echo "✅ Protection scripts installed"
+fi
 
 # Set environment variables
 export USE_POSTGRESQL=true
@@ -173,5 +164,10 @@ echo "🔌 FastAPI: http://[HOST]:8000"
 echo "🛡️ Fallback UI: Available if Streamlit fails"
 echo "=========================================="
 
-# Use updated supervisord configuration with SIGILL protection
-exec /usr/bin/supervisord -c /app/supervisord_safe.conf
+# Use supervisord configuration with SIGILL protection
+if [ -f "/app/supervisord.conf" ]; then
+    exec /usr/bin/supervisord -c /app/supervisord.conf
+else
+    # Fallback to basic supervisord if config not found
+    exec /usr/bin/supervisord -c /etc/supervisord.conf
+fi
