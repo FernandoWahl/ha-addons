@@ -256,25 +256,69 @@ def execute_command(*args, **kwargs):
 
 def get_command_result(*args, **kwargs):
     return {"result": "PostgreSQL mode - no SurrealDB commands"}
+
+# Mock registry object
+class MockRegistry:
+    def __init__(self):
+        self.commands = {}
+    
+    def register(self, name, func):
+        self.commands[name] = func
+        return func
+    
+    def get(self, name):
+        return self.commands.get(name, lambda *args, **kwargs: {"status": "mock"})
+    
+    def list_commands(self):
+        return list(self.commands.keys())
+
+# Create registry instance
+registry = MockRegistry()
 EOF
 
-echo "✅ Created mock surreal_commands module"
+echo "✅ Created mock surreal_commands module with registry"
 
-# Fix API port configuration
+# Fix API port configuration - more comprehensive approach
 echo "🔧 Fixing API port configuration..."
 if [ -f "/app/open-notebook-src/run_api.py" ]; then
     # Create backup
     cp "/app/open-notebook-src/run_api.py" "/app/open-notebook-src/run_api.py.backup"
     
-    # Replace port 5055 with 8000
-    sed -i 's/127.0.0.1:5055/0.0.0.0:8000/g' /app/open-notebook-src/run_api.py
-    sed -i 's/localhost:5055/localhost:8000/g' /app/open-notebook-src/run_api.py
-    sed -i 's/port=5055/port=8000/g' /app/open-notebook-src/run_api.py
+    # Show current content for debugging
+    echo "📋 Current run_api.py content:"
+    head -20 /app/open-notebook-src/run_api.py
+    
+    # Replace all occurrences of port 5055 with 8000
+    sed -i 's/5055/8000/g' /app/open-notebook-src/run_api.py
+    sed -i 's/127\.0\.0\.1/0.0.0.0/g' /app/open-notebook-src/run_api.py
+    
+    # Also check for any uvicorn.run calls and fix them
+    sed -i 's/host="127\.0\.0\.1"/host="0.0.0.0"/g' /app/open-notebook-src/run_api.py
+    sed -i 's/host='\''127\.0\.0\.1'\''/host="0.0.0.0"/g' /app/open-notebook-src/run_api.py
+    
+    echo "📋 Modified run_api.py content:"
+    head -20 /app/open-notebook-src/run_api.py
     
     echo "✅ Fixed API port configuration"
 else
     echo "❌ run_api.py not found"
 fi
+
+# Also check if there's a config file or environment variable setting the port
+if [ -f "/app/open-notebook-src/.env" ]; then
+    echo "🔧 Checking .env file for port settings..."
+    grep -i port /app/open-notebook-src/.env || echo "No port settings in .env"
+fi
+
+# Set environment variable to override port
+export API_PORT=8000
+export HOST=0.0.0.0
+export PORT=8000
+
+echo "🌐 Environment variables set:"
+echo "  API_PORT=8000"
+echo "  HOST=0.0.0.0"
+echo "  PORT=8000"
 
 echo "🐍 Environment configured for PostgreSQL"
 echo "🗄️ Database mode: PostgreSQL"
