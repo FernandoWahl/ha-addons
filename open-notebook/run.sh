@@ -1,198 +1,146 @@
-#!/bin/bash
+#!/usr/bin/with-contenv bashio
+set -e
 
-# ==============================================================================
-# Home Assistant Add-on: Open Notebook
-# Pure interface to original Open Notebook with PostgreSQL support
-# ==============================================================================
-
-echo "🚀 Open Notebook Interface v3.0.0"
-echo "⏰ $(date '+%Y-%m-%d %H:%M:%S')"
-echo "🗄️ PostgreSQL Compatible Version"
+# Display startup banner
+echo "🚀 Open Notebook Interface v3.2.3"
+echo "⏰ $(date)"
+echo "🗄️ PostgreSQL Compatible Version with SIGILL Protection"
 echo "=========================================="
 
-# Function to read Home Assistant configuration
-read_config() {
-    local key="$1"
-    local default="$2"
-    local value=""
-    
-    # Try bashio first
-    if command -v bashio >/dev/null 2>&1; then
-        value=$(bashio::config "$key" "$default" 2>/dev/null)
-        if [[ -n "$value" && "$value" != "$default" ]]; then
-            echo "$value"
-            return
-        fi
-    fi
-    
-    # Fallback: try to read from options.json
-    if [ -f "/data/options.json" ]; then
-        value=$(python3 -c "
-import json, sys
-try:
-    with open('/data/options.json') as f:
-        data = json.load(f)
-    result = data.get('$key', '$default')
-    if result and result != '$default':
-        print(result)
-    else:
-        print('$default')
-except Exception as e:
-    print('$default')
-" 2>/dev/null)
-        
-        if [[ -n "$value" ]]; then
-            echo "$value"
-            return
-        fi
-    fi
-    
-    # Final fallback
-    echo "$default"
-}
-
-# Read database configuration
+# Read configuration
 echo "⚙️ Reading database configuration..."
+DB_HOST=$(bashio::services "postgres" "host")
+DB_PORT=$(bashio::services "postgres" "port")
+DB_USERNAME=$(bashio::services "postgres" "username")
+DB_PASSWORD=$(bashio::services "postgres" "password")
+DB_DATABASE="open_notebook"
 
-DATABASE_TYPE=$(read_config 'database_type' 'postgresql')
-POSTGRES_HOST=$(read_config 'postgres_host' '')
-POSTGRES_PORT=$(read_config 'postgres_port' '5432')
-POSTGRES_DATABASE=$(read_config 'postgres_database' 'open_notebook')
-POSTGRES_USER=$(read_config 'postgres_user' '')
-POSTGRES_PASSWORD=$(read_config 'postgres_password' '')
-
-# Read application configuration
 echo "⚙️ Reading application configuration..."
+OPENAI_API_KEY=$(bashio::config 'openai_api_key' '')
+ANTHROPIC_API_KEY=$(bashio::config 'anthropic_api_key' '')
+GROQ_API_KEY=$(bashio::config 'groq_api_key' '')
+GOOGLE_API_KEY=$(bashio::config 'google_api_key' '')
+OLLAMA_BASE_URL=$(bashio::config 'ollama_base_url' '')
+AUTH_ENABLED=$(bashio::config 'auth_enabled' 'false')
+DEBUG_MODE=$(bashio::config 'debug_mode' 'true')
 
-OPENAI_API_KEY=$(read_config 'openai_api_key' '')
-ANTHROPIC_API_KEY=$(read_config 'anthropic_api_key' '')
-GROQ_API_KEY=$(read_config 'groq_api_key' '')
-GOOGLE_API_KEY=$(read_config 'google_api_key' '')
-MISTRAL_API_KEY=$(read_config 'mistral_api_key' '')
-DEEPSEEK_API_KEY=$(read_config 'deepseek_api_key' '')
-OLLAMA_BASE_URL=$(read_config 'ollama_base_url' '')
+# Construct PostgreSQL connection string
+POSTGRES_URL="postgresql://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}"
+echo "🐘 Using PostgreSQL: ${DB_HOST}:${DB_PORT}/${DB_DATABASE}"
 
-DEBUG=$(read_config 'debug' 'false')
-LOG_LEVEL=$(read_config 'log_level' 'INFO')
-MAX_FILE_SIZE=$(read_config 'max_file_size' '50')
-
-ENABLE_AUTH=$(read_config 'enable_auth' 'false')
-AUTH_USERNAME=$(read_config 'auth_username' '')
-AUTH_PASSWORD=$(read_config 'auth_password' '')
-
-# Configure database URL
-if [[ "$DATABASE_TYPE" == "postgresql" ]]; then
-    if [[ -z "$POSTGRES_HOST" || -z "$POSTGRES_USER" || -z "$POSTGRES_PASSWORD" ]]; then
-        echo "❌ PostgreSQL configuration incomplete!"
-        echo "   Please configure: postgres_host, postgres_user, postgres_password"
-        echo "   Falling back to SQLite..."
-        DATABASE_URL="sqlite:///data/open_notebook.db"
-        echo "📁 Using SQLite: /data/open_notebook.db"
-    else
-        DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}"
-        echo "🐘 Using PostgreSQL: ${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}"
-        
-        # Test PostgreSQL connection
-        echo "🔍 Testing PostgreSQL connection..."
-        python3 -c "
+# Test PostgreSQL connection
+echo "🔍 Testing PostgreSQL connection..."
+if python3 -c "
 import psycopg2
 try:
-    conn = psycopg2.connect(
-        host='${POSTGRES_HOST}',
-        port=${POSTGRES_PORT},
-        database='${POSTGRES_DATABASE}',
-        user='${POSTGRES_USER}',
-        password='${POSTGRES_PASSWORD}'
-    )
+    conn = psycopg2.connect('${POSTGRES_URL}')
     conn.close()
     print('✅ PostgreSQL connection successful')
 except Exception as e:
     print(f'❌ PostgreSQL connection failed: {e}')
-    print('   Falling back to SQLite...')
     exit(1)
-" || {
-            echo "🔄 Falling back to SQLite due to connection failure"
-            DATABASE_URL="sqlite:///data/open_notebook.db"
-        }
-    fi
+"; then
+    echo "✅ PostgreSQL connection successful"
 else
-    DATABASE_URL="sqlite:///data/open_notebook.db"
-    echo "📁 Using SQLite: /data/open_notebook.db"
+    echo "❌ PostgreSQL connection failed"
+    exit 1
 fi
 
-# Create .env file for Open Notebook
+# Create configuration file
 echo "📝 Creating configuration file..."
-
 cd /app/open-notebook-src
 
 cat > .env << EOF
 # Database Configuration
-DATABASE_URL=${DATABASE_URL}
-
-# SurrealDB Configuration (disabled - using PostgreSQL)
-SURREALDB_URL=disabled
-SURREALDB_USER=root
-SURREALDB_PASSWORD=root
-SURREALDB_NAMESPACE=open_notebook
-SURREALDB_DATABASE=main
-USE_SURREALDB=false
+DATABASE_URL=${POSTGRES_URL}
+USE_POSTGRESQL=true
 SKIP_SURREALDB_MIGRATION=true
 
-# AI Model API Keys
+# API Configuration
+API_HOST=0.0.0.0
+API_PORT=8000
+HOST=0.0.0.0
+PORT=8000
+API_BASE_URL=http://localhost:8000
+
+# AI Service Configuration
 OPENAI_API_KEY=${OPENAI_API_KEY}
 ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
 GROQ_API_KEY=${GROQ_API_KEY}
 GOOGLE_API_KEY=${GOOGLE_API_KEY}
-MISTRAL_API_KEY=${MISTRAL_API_KEY}
-DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
-
-# Ollama Configuration
 OLLAMA_BASE_URL=${OLLAMA_BASE_URL}
 
-# Application Settings
-DEBUG=${DEBUG}
-LOG_LEVEL=${LOG_LEVEL}
-MAX_FILE_SIZE_MB=${MAX_FILE_SIZE}
+# Application Configuration
+AUTH_ENABLED=${AUTH_ENABLED}
+DEBUG=${DEBUG_MODE}
 
-# Security
-ENABLE_AUTH=${ENABLE_AUTH}
-AUTH_USERNAME=${AUTH_USERNAME}
-AUTH_PASSWORD=${AUTH_PASSWORD}
-
-# Paths
-DATA_PATH=/data
-LOGS_PATH=/app/logs
-
-# Force PostgreSQL/SQLite usage
-USE_POSTGRESQL=true
-DISABLE_SURREALDB=true
+# Streamlit Safety Configuration
+STREAMLIT_SERVER_HEADLESS=true
+STREAMLIT_SERVER_ENABLE_CORS=false
+STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION=false
+STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+STREAMLIT_SERVER_RUN_ON_SAVE=false
+STREAMLIT_SERVER_ENABLE_WEBSOCKET_COMPRESSION=false
+STREAMLIT_GLOBAL_DEVELOPMENT_MODE=false
+PYTHONOPTIMIZE=1
+PYTHONDONTWRITEBYTECODE=1
 EOF
 
 echo "✅ Configuration created successfully"
 
-# Run pre-start setup for PostgreSQL compatibility
+# Run PostgreSQL compatibility setup
 echo "🔧 Running PostgreSQL compatibility setup..."
-source /app/pre_start.sh
+python3 /app/pre_start.sh
+echo "✅ PostgreSQL compatibility setup completed"
 
-# Show configuration summary (without sensitive data)
+# Copy safe execution scripts
+echo "📦 Installing SIGILL protection scripts..."
+cp /app/streamlit_safe.py /app/open-notebook-src/
+cp /app/fallback_server.py /app/open-notebook-src/
+echo "✅ Protection scripts installed"
+
+# Set environment variables
+export USE_POSTGRESQL=true
+export SKIP_SURREALDB_MIGRATION=true
+export DATABASE_URL="${POSTGRES_URL}"
+export API_PORT=8000
+export HOST=0.0.0.0
+export PORT=8000
+export API_BASE_URL=http://localhost:8000
+export PYTHONPATH=/app/open-notebook-src
+
+# Safety environment variables
+export STREAMLIT_SERVER_HEADLESS=true
+export STREAMLIT_SERVER_ENABLE_CORS=false
+export STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION=false
+export STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+export STREAMLIT_SERVER_RUN_ON_SAVE=false
+export STREAMLIT_SERVER_ENABLE_WEBSOCKET_COMPRESSION=false
+export STREAMLIT_GLOBAL_DEVELOPMENT_MODE=false
+export PYTHONOPTIMIZE=1
+export PYTHONDONTWRITEBYTECODE=1
+
+echo "🐍 Environment configured for PostgreSQL"
+echo "🗄️ Database mode: PostgreSQL"
+
+# Display configuration summary
 echo "📊 Configuration Summary:"
-echo "  🗄️ Database: $(echo $DATABASE_URL | sed 's/:\/\/.*@/:\/\/***@/')"
+echo "  🗄️ Database: postgresql://***@${DB_HOST}:${DB_PORT}/${DB_DATABASE}"
 echo "  🤖 OpenAI: $([ -n "$OPENAI_API_KEY" ] && echo "✅ Configured" || echo "❌ Not set")"
 echo "  🤖 Anthropic: $([ -n "$ANTHROPIC_API_KEY" ] && echo "✅ Configured" || echo "❌ Not set")"
 echo "  🤖 Groq: $([ -n "$GROQ_API_KEY" ] && echo "✅ Configured" || echo "❌ Not set")"
 echo "  🤖 Google: $([ -n "$GOOGLE_API_KEY" ] && echo "✅ Configured" || echo "❌ Not set")"
-echo "  🤖 Ollama: $([ -n "$OLLAMA_BASE_URL" ] && echo "✅ $OLLAMA_BASE_URL" || echo "❌ Not set")"
-echo "  🔒 Auth: $([ "$ENABLE_AUTH" == "true" ] && echo "✅ Enabled" || echo "❌ Disabled")"
-echo "  🐛 Debug: $DEBUG"
-
-# Ensure data directory exists
-mkdir -p /data /app/logs
-
-# Start services with supervisor
+echo "  🤖 Ollama: $([ -n "$OLLAMA_BASE_URL" ] && echo "✅ Configured" || echo "❌ Not set")"
+echo "  🔒 Auth: $([ "$AUTH_ENABLED" = "true" ] && echo "✅ Enabled" || echo "❌ Disabled")"
+echo "  🐛 Debug: $DEBUG_MODE"
+echo "  🛡️ SIGILL Protection: ✅ Enabled"
 echo "=========================================="
+
 echo "🚀 Starting Open Notebook services..."
 echo "🌐 Streamlit UI: http://[HOST]:8502"
 echo "🔌 FastAPI: http://[HOST]:8000"
+echo "🛡️ Fallback UI: Available if Streamlit fails"
 echo "=========================================="
 
-exec /usr/bin/supervisord -c /app/supervisord.conf
+# Use updated supervisord configuration with SIGILL protection
+exec /usr/bin/supervisord -c /app/supervisord_safe.conf
