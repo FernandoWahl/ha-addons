@@ -602,11 +602,9 @@ async def get_models(model_type: Optional[str] = Query(None)):
         if model_type:
             all_models = [m for m in all_models if m.get("type") == model_type]
         
-        return {
-            "models": all_models,
-            "total": len(all_models),
-            "source": "postgresql_mock"
-        }
+        # Return the models directly as a list (not wrapped in dict)
+        # This matches what models_service.py expects
+        return all_models
     
     # This should never execute in PostgreSQL mode
     raise HTTPException(status_code=500, detail="SurrealDB mode not supported")
@@ -617,10 +615,11 @@ async def get_default_models():
     
     # Always use PostgreSQL mode (no WebSocket)
     if os.getenv('USE_POSTGRESQL', 'false').lower() == 'true' or True:
-        default_models = [m for m in get_mock_models() if m.get("default", False)]
+        all_models = get_mock_models()
+        default_models = [m for m in all_models if m.get("default", False)]
         
         return {
-            "models": get_mock_models(),
+            "models": all_models,
             "default_models": default_models,
             "default_model": "gpt-3.5-turbo",
             "source": "postgresql_mock"
