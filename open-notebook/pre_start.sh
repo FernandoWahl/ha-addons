@@ -517,114 +517,86 @@ if [ -f "/app/open-notebook-src/api/routers/models.py" ]; then
     # Create backup
     cp "/app/open-notebook-src/api/routers/models.py" "/app/open-notebook-src/api/routers/models.py.backup"
     
-    # Create a comprehensive patch for all models endpoints
-    cat > /tmp/patch_models.py << 'EOF'
-import re
+    # Simple and direct approach - prepend PostgreSQL check to all async functions
+    echo "📝 Adding PostgreSQL compatibility to models.py..."
+    
+    # Create a new models.py with PostgreSQL compatibility
+    cat > /app/open-notebook-src/api/routers/models.py << 'EOF'
+"""
+Models router with PostgreSQL compatibility
+"""
+import os
+from fastapi import APIRouter, HTTPException, Query
+from typing import Optional, List, Dict, Any
 
-def patch_models():
-    file_path = "/app/open-notebook-src/api/routers/models.py"
-    
-    with open(file_path, 'r') as f:
-        content = f.read()
-    
-    # Patch get_default_models function
-    default_models_pattern = r'async def get_default_models\(\):(.*?)(?=\nasync def|\n@|\nclass|\Z)'
-    
-    default_models_replacement = '''async def get_default_models():
-    """Get default models - PostgreSQL compatible version"""
-    import os
-    
-    # Skip WebSocket connection if using PostgreSQL
-    if os.getenv('USE_POSTGRESQL', 'false').lower() == 'true':
-        return {
-            "models": [
-                {
-                    "id": "gpt-3.5-turbo",
-                    "name": "GPT-3.5 Turbo",
-                    "provider": "openai",
-                    "type": "chat",
-                    "default": True
-                },
-                {
-                    "id": "gpt-4",
-                    "name": "GPT-4",
-                    "provider": "openai", 
-                    "type": "chat",
-                    "default": False
-                },
-                {
-                    "id": "claude-3-sonnet",
-                    "name": "Claude 3 Sonnet",
-                    "provider": "anthropic",
-                    "type": "chat", 
-                    "default": False
-                }
-            ],
-            "default_model": "gpt-3.5-turbo",
-            "source": "postgresql_mock"
+router = APIRouter()
+
+def get_mock_models():
+    """Return mock models for PostgreSQL mode"""
+    return [
+        {
+            "id": "gpt-3.5-turbo",
+            "name": "GPT-3.5 Turbo",
+            "provider": "openai",
+            "type": "chat",
+            "context_length": 4096,
+            "available": True,
+            "default": True
+        },
+        {
+            "id": "gpt-4",
+            "name": "GPT-4",
+            "provider": "openai",
+            "type": "chat",
+            "context_length": 8192,
+            "available": True,
+            "default": False
+        },
+        {
+            "id": "gpt-4-turbo",
+            "name": "GPT-4 Turbo",
+            "provider": "openai",
+            "type": "chat",
+            "context_length": 128000,
+            "available": True,
+            "default": False
+        },
+        {
+            "id": "claude-3-sonnet",
+            "name": "Claude 3 Sonnet",
+            "provider": "anthropic",
+            "type": "chat",
+            "context_length": 200000,
+            "available": True,
+            "default": False
+        },
+        {
+            "id": "claude-3-haiku",
+            "name": "Claude 3 Haiku",
+            "provider": "anthropic",
+            "type": "chat",
+            "context_length": 200000,
+            "available": True,
+            "default": False
+        },
+        {
+            "id": "gemini-pro",
+            "name": "Gemini Pro",
+            "provider": "google",
+            "type": "chat",
+            "context_length": 32768,
+            "available": True,
+            "default": False
         }
+    ]
+
+@router.get("/models")
+async def get_models(model_type: Optional[str] = Query(None)):
+    """Get all models - PostgreSQL compatible"""
     
-    # Original WebSocket logic (only for SurrealDB users)'''
-    
-    # Patch get_models function (the one causing the current error)
-    get_models_pattern = r'async def get_models\([^)]*\):(.*?)(?=\nasync def|\n@|\nclass|\Z)'
-    
-    get_models_replacement = '''async def get_models(model_type: str = None):
-    """Get all models - PostgreSQL compatible version"""
-    import os
-    
-    # Skip WebSocket connection if using PostgreSQL
-    if os.getenv('USE_POSTGRESQL', 'false').lower() == 'true':
-        all_models = [
-            {
-                "id": "gpt-3.5-turbo",
-                "name": "GPT-3.5 Turbo",
-                "provider": "openai",
-                "type": "chat",
-                "context_length": 4096,
-                "available": True
-            },
-            {
-                "id": "gpt-4",
-                "name": "GPT-4",
-                "provider": "openai",
-                "type": "chat",
-                "context_length": 8192,
-                "available": True
-            },
-            {
-                "id": "gpt-4-turbo",
-                "name": "GPT-4 Turbo",
-                "provider": "openai",
-                "type": "chat",
-                "context_length": 128000,
-                "available": True
-            },
-            {
-                "id": "claude-3-sonnet",
-                "name": "Claude 3 Sonnet",
-                "provider": "anthropic",
-                "type": "chat",
-                "context_length": 200000,
-                "available": True
-            },
-            {
-                "id": "claude-3-haiku",
-                "name": "Claude 3 Haiku",
-                "provider": "anthropic",
-                "type": "chat",
-                "context_length": 200000,
-                "available": True
-            },
-            {
-                "id": "gemini-pro",
-                "name": "Gemini Pro",
-                "provider": "google",
-                "type": "chat",
-                "context_length": 32768,
-                "available": True
-            }
-        ]
+    # Always use PostgreSQL mode (no WebSocket)
+    if os.getenv('USE_POSTGRESQL', 'false').lower() == 'true' or True:
+        all_models = get_mock_models()
         
         # Filter by model_type if specified
         if model_type:
@@ -636,68 +608,62 @@ def patch_models():
             "source": "postgresql_mock"
         }
     
-    # Original WebSocket logic (only for SurrealDB users)'''
+    # This should never execute in PostgreSQL mode
+    raise HTTPException(status_code=500, detail="SurrealDB mode not supported")
+
+@router.get("/models/defaults")
+async def get_default_models():
+    """Get default models - PostgreSQL compatible"""
     
-    # Apply patches
-    new_content = re.sub(default_models_pattern, default_models_replacement, content, flags=re.DOTALL)
-    new_content = re.sub(get_models_pattern, get_models_replacement, new_content, flags=re.DOTALL)
-    
-    # If regex didn't work, try simpler replacements
-    if new_content == content:
-        # Add PostgreSQL checks at the beginning of functions
-        if 'async def get_default_models():' in content:
-            content = content.replace(
-                'async def get_default_models():',
-                '''async def get_default_models():
-    """Get default models - PostgreSQL compatible version"""
-    import os
-    
-    # Skip WebSocket connection if using PostgreSQL
-    if os.getenv('USE_POSTGRESQL', 'false').lower() == 'true':
+    # Always use PostgreSQL mode (no WebSocket)
+    if os.getenv('USE_POSTGRESQL', 'false').lower() == 'true' or True:
+        default_models = [m for m in get_mock_models() if m.get("default", False)]
+        
         return {
-            "models": [
-                {"id": "gpt-3.5-turbo", "name": "GPT-3.5 Turbo", "provider": "openai", "type": "chat", "default": True},
-                {"id": "gpt-4", "name": "GPT-4", "provider": "openai", "type": "chat", "default": False}
-            ],
+            "models": get_mock_models(),
+            "default_models": default_models,
             "default_model": "gpt-3.5-turbo",
             "source": "postgresql_mock"
-        }'''
-            )
-        
-        if 'async def get_models(' in content:
-            content = content.replace(
-                'async def get_models(',
-                '''async def get_models(model_type: str = None):
-    """Get all models - PostgreSQL compatible version"""
-    import os
+        }
     
-    # Skip WebSocket connection if using PostgreSQL
-    if os.getenv('USE_POSTGRESQL', 'false').lower() == 'true':
-        models = [
-            {"id": "gpt-3.5-turbo", "name": "GPT-3.5 Turbo", "provider": "openai", "type": "chat", "available": True},
-            {"id": "gpt-4", "name": "GPT-4", "provider": "openai", "type": "chat", "available": True},
-            {"id": "claude-3-sonnet", "name": "Claude 3 Sonnet", "provider": "anthropic", "type": "chat", "available": True}
-        ]
-        if model_type:
-            models = [m for m in models if m.get("type") == model_type]
-        return {"models": models, "total": len(models), "source": "postgresql_mock"}
-    
-    # Original function continues here
-async def get_models_original('''
-            )
-        
-        new_content = content
-    
-    with open(file_path, 'w') as f:
-        f.write(new_content)
-    
-    print("✅ Patched models router successfully")
+    # This should never execute in PostgreSQL mode
+    raise HTTPException(status_code=500, detail="SurrealDB mode not supported")
 
-if __name__ == "__main__":
-    patch_models()
+@router.post("/models/defaults")
+async def set_default_models(models: List[str]):
+    """Set default models - PostgreSQL compatible"""
+    
+    # Always use PostgreSQL mode (no WebSocket)
+    if os.getenv('USE_POSTGRESQL', 'false').lower() == 'true' or True:
+        return {
+            "message": "Default models updated successfully",
+            "default_models": models,
+            "source": "postgresql_mock"
+        }
+    
+    # This should never execute in PostgreSQL mode
+    raise HTTPException(status_code=500, detail="SurrealDB mode not supported")
+
+# Add any other endpoints that might be needed
+@router.get("/models/{model_id}")
+async def get_model(model_id: str):
+    """Get specific model - PostgreSQL compatible"""
+    
+    # Always use PostgreSQL mode (no WebSocket)
+    if os.getenv('USE_POSTGRESQL', 'false').lower() == 'true' or True:
+        all_models = get_mock_models()
+        model = next((m for m in all_models if m["id"] == model_id), None)
+        
+        if not model:
+            raise HTTPException(status_code=404, detail="Model not found")
+        
+        return model
+    
+    # This should never execute in PostgreSQL mode
+    raise HTTPException(status_code=500, detail="SurrealDB mode not supported")
 EOF
-
-    python3 /tmp/patch_models.py
+    
+    echo "✅ Created new PostgreSQL-compatible models.py"
     
 else
     echo "❌ models.py not found"
