@@ -110,6 +110,7 @@ COPY run.sh /
 COPY supervisord_interface.conf /app/supervisord.conf
 COPY patch_migrations.py /app/patch_migrations.py
 COPY pre_start.sh /app/pre_start.sh
+COPY wait_for_api.py /app/wait_for_api.py
 
 # Create directories for Home Assistant integration
 RUN mkdir -p /app/logs /config/open-notebook /share/open-notebook /data

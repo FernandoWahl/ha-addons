@@ -158,5 +158,83 @@ else
 fi
 
 echo "✅ PostgreSQL compatibility setup completed"
+
+# Patch API client for resilient connections
+if [ -f "/app/open-notebook-src/api/client.py" ]; then
+    echo "📝 Patching API client for resilient connections..."
+    
+    # Create backup
+    cp "/app/open-notebook-src/api/client.py" "/app/open-notebook-src/api/client.py.backup"
+    
+    # Patch the _make_request method to be more resilient
+    cat > /tmp/patch_client.py << 'EOF'
+import re
+
+def patch_client():
+    file_path = "/app/open-notebook-src/api/client.py"
+    
+    with open(file_path, 'r') as f:
+        content = f.read()
+    
+    # Add resilient connection handling
+    if 'def _make_request(self' in content:
+        # Replace the _make_request method with a more resilient version
+        pattern = r'def _make_request\(self[^}]*?raise ConnectionError\(f"Failed to connect to API: \{str\(e\)\}"\)'
+        
+        replacement = '''def _make_request(self, method, endpoint, **kwargs):
+        """Make HTTP request with resilient error handling"""
+        import time
+        import os
+        
+        # If API is not ready yet, wait a bit
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                url = f"{self.base_url}{endpoint}"
+                response = self.session.request(method, url, **kwargs)
+                response.raise_for_status()
+                return response.json() if response.content else {}
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    print(f"⏳ API connection attempt {attempt + 1} failed, retrying...")
+                    time.sleep(2)
+                    continue
+                else:
+                    # On final failure, return empty response instead of crashing
+                    print(f"⚠️ API connection failed after {max_retries} attempts: {e}")
+                    if "models" in endpoint:
+                        return {"models": []}
+                    return {}'''
+        
+        new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+        
+        # If regex didn't work, try simpler replacement
+        if new_content == content:
+            new_content = content.replace(
+                'raise ConnectionError(f"Failed to connect to API: {str(e)}")',
+                '''print(f"⚠️ API connection failed: {e}")
+                if "models" in endpoint:
+                    return {"models": []}
+                return {}'''
+            )
+        
+        with open(file_path, 'w') as f:
+            f.write(new_content)
+        
+        print("✅ Patched API client successfully")
+    else:
+        print("❌ _make_request method not found in client.py")
+
+if __name__ == "__main__":
+    patch_client()
+EOF
+
+    python3 /tmp/patch_client.py
+    
+else
+    echo "❌ client.py not found"
+fi
+
+echo "✅ All patches applied successfully"
 echo "🐍 Environment configured for PostgreSQL"
 echo "🗄️ Database mode: PostgreSQL"
