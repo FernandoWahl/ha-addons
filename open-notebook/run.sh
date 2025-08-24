@@ -129,6 +129,13 @@ cat > .env << EOF
 # Database Configuration
 DATABASE_URL=${DATABASE_URL}
 
+# SurrealDB Configuration (for compatibility)
+SURREALDB_URL=ws://localhost:8000/rpc
+SURREALDB_USER=root
+SURREALDB_PASSWORD=root
+SURREALDB_NAMESPACE=open_notebook
+SURREALDB_DATABASE=main
+
 # AI Model API Keys
 OPENAI_API_KEY=${OPENAI_API_KEY}
 ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}

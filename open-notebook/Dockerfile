@@ -40,14 +40,15 @@ RUN pip3 install --no-cache-dir \
     "supervisor>=4.2.5" \
     "requests>=2.31.0"
 
-# Install database dependencies (PostgreSQL + SQLite)
+# Install database dependencies (PostgreSQL + SQLite + SurrealDB for compatibility)
 RUN pip3 install --no-cache-dir \
     --index-url https://pypi.org/simple \
     --prefer-binary \
     "psycopg2-binary>=2.9.0" \
     "asyncpg>=0.29.0" \
     "sqlalchemy>=2.0.0" \
-    "alembic>=1.13.0"
+    "alembic>=1.13.0" \
+    "surrealdb>=0.3.0" || echo "SurrealDB install failed, continuing..."
 
 # Install LangChain ecosystem with compatible versions
 RUN pip3 install --no-cache-dir \
