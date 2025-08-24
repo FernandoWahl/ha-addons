@@ -236,5 +236,45 @@ else
 fi
 
 echo "✅ All patches applied successfully"
+
+# Create mock surreal_commands module
+echo "📦 Creating mock surreal_commands module..."
+cat > /app/open-notebook-src/surreal_commands.py << 'EOF'
+"""Mock surreal_commands module for PostgreSQL compatibility"""
+
+def get_command_status(*args, **kwargs):
+    """Mock function for command status"""
+    return {"status": "completed", "result": "PostgreSQL mode - command skipped"}
+
+def submit_command(*args, **kwargs):
+    """Mock function for command submission"""
+    return {"id": "mock_command", "status": "submitted", "message": "PostgreSQL mode - command mocked"}
+
+# Add any other functions that might be imported
+def execute_command(*args, **kwargs):
+    return {"status": "success", "message": "PostgreSQL mode"}
+
+def get_command_result(*args, **kwargs):
+    return {"result": "PostgreSQL mode - no SurrealDB commands"}
+EOF
+
+echo "✅ Created mock surreal_commands module"
+
+# Fix API port configuration
+echo "🔧 Fixing API port configuration..."
+if [ -f "/app/open-notebook-src/run_api.py" ]; then
+    # Create backup
+    cp "/app/open-notebook-src/run_api.py" "/app/open-notebook-src/run_api.py.backup"
+    
+    # Replace port 5055 with 8000
+    sed -i 's/127.0.0.1:5055/0.0.0.0:8000/g' /app/open-notebook-src/run_api.py
+    sed -i 's/localhost:5055/localhost:8000/g' /app/open-notebook-src/run_api.py
+    sed -i 's/port=5055/port=8000/g' /app/open-notebook-src/run_api.py
+    
+    echo "✅ Fixed API port configuration"
+else
+    echo "❌ run_api.py not found"
+fi
+
 echo "🐍 Environment configured for PostgreSQL"
 echo "🗄️ Database mode: PostgreSQL"
