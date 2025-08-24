@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Streamlit wrapper with focused error detection
+Streamlit wrapper with proper streamlit run execution
 """
 
 import os
 import sys
-import traceback
+import subprocess
 
 def main():
     print("🌐 STREAMLIT WRAPPER: Starting debug...")
@@ -30,44 +30,42 @@ def main():
         print(f"  ❌ Streamlit import failed: {e}")
         return 1
     
+    # Test app_home import without executing
     try:
-        print("  Testing app_home import...")
-        sys.path.insert(0, '/app/open-notebook-src')
-        
-        # Try to import the main app file
-        import app_home
-        print("  ✅ app_home imported successfully")
+        print("  Testing app_home availability...")
+        if os.path.exists('/app/open-notebook-src/app_home.py'):
+            print("  ✅ app_home.py exists")
+        else:
+            print("  ❌ app_home.py not found")
+            return 1
     except Exception as e:
-        print(f"  ❌ app_home import failed: {e}")
-        print(f"  📋 Full traceback:")
-        traceback.print_exc()
-        
-        # Try to identify the specific issue
-        if "surrealdb" in str(e).lower():
-            print("  🔍 Issue appears to be SurrealDB related")
-        elif "migration" in str(e).lower():
-            print("  🔍 Issue appears to be migration related")
-        elif "database" in str(e).lower():
-            print("  🔍 Issue appears to be database related")
-        
+        print(f"  ❌ app_home check failed: {e}")
         return 1
     
-    # If we get here, try to run Streamlit
-    print("🚀 All imports successful - starting Streamlit...")
+    # Start Streamlit using proper streamlit run command
+    print("🚀 Starting Streamlit with proper session context...")
     
     try:
-        # Use exec to replace the process
-        os.execvp(sys.executable, [
+        # Use streamlit run instead of direct import
+        cmd = [
             sys.executable, '-m', 'streamlit', 'run', 'app_home.py',
             '--server.port=8501',
             '--server.address=0.0.0.0',
             '--server.headless=true',
             '--server.enableCORS=false',
-            '--server.enableXsrfProtection=false'
-        ])
+            '--server.enableXsrfProtection=false',
+            '--server.runOnSave=false',
+            '--browser.gatherUsageStats=false'
+        ]
+        
+        print(f"📋 Command: {' '.join(cmd)}")
+        
+        # Execute streamlit run
+        result = subprocess.run(cmd, cwd='/app/open-notebook-src')
+        return result.returncode
+        
     except Exception as e:
-        print(f"❌ Failed to start Streamlit: {e}")
-        traceback.print_exc()
+        print(f"❌ Error starting Streamlit: {e}")
         return 1
 
 if __name__ == "__main__":
