@@ -274,6 +274,15 @@ class MockRegistry:
 
 # Create registry instance
 registry = MockRegistry()
+
+# Add command decorator function
+def command(name=None):
+    """Mock command decorator"""
+    def decorator(func):
+        command_name = name or func.__name__
+        registry.register(command_name, func)
+        return func
+    return decorator
 EOF
 
 echo "✅ Created mock surreal_commands module with registry"
