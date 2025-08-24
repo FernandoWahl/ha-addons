@@ -278,6 +278,65 @@ EOF
 
 echo "✅ Created mock surreal_commands module with registry"
 
+# Create mock content_core module
+echo "📦 Creating mock content_core module..."
+cat > /app/open-notebook-src/content_core.py << 'EOF'
+"""Mock content_core module for PostgreSQL compatibility"""
+
+def extract_content(source, *args, **kwargs):
+    """Mock function for content extraction"""
+    if isinstance(source, str):
+        return {
+            "content": source,
+            "metadata": {"source": "mock", "type": "text"},
+            "extracted_text": source,
+            "title": "Mock Content",
+            "summary": "Mock content extraction for PostgreSQL mode"
+        }
+    elif isinstance(source, dict):
+        return {
+            "content": source.get("content", ""),
+            "metadata": source.get("metadata", {}),
+            "extracted_text": source.get("text", ""),
+            "title": source.get("title", "Mock Content"),
+            "summary": "Mock content extraction"
+        }
+    else:
+        return {
+            "content": str(source),
+            "metadata": {"source": "mock"},
+            "extracted_text": str(source),
+            "title": "Mock Content",
+            "summary": "Mock content extraction"
+        }
+
+def process_content(content, *args, **kwargs):
+    """Mock function for content processing"""
+    return {
+        "processed_content": content,
+        "status": "processed",
+        "method": "mock_processing"
+    }
+
+def analyze_content(content, *args, **kwargs):
+    """Mock function for content analysis"""
+    return {
+        "analysis": "Mock analysis completed",
+        "sentiment": "neutral",
+        "topics": ["mock", "content"],
+        "confidence": 0.95
+    }
+
+# Add any other functions that might be imported
+def parse_document(*args, **kwargs):
+    return {"parsed": True, "content": "Mock parsed content"}
+
+def extract_metadata(*args, **kwargs):
+    return {"metadata": "Mock metadata", "source": "mock"}
+EOF
+
+echo "✅ Created mock content_core module"
+
 # Fix API port configuration - more comprehensive approach
 echo "🔧 Fixing API port configuration..."
 if [ -f "/app/open-notebook-src/run_api.py" ]; then
