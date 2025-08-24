@@ -533,6 +533,11 @@ router = APIRouter()
 
 def get_mock_models():
     """Return mock models for PostgreSQL mode"""
+    from datetime import datetime
+    
+    # Current timestamp for created field
+    current_time = datetime.now().isoformat()
+    
     return [
         {
             "id": "gpt-3.5-turbo",
@@ -541,7 +546,13 @@ def get_mock_models():
             "type": "chat",
             "context_length": 4096,
             "available": True,
-            "default": True
+            "default": True,
+            "created": current_time,
+            "updated": current_time,
+            "description": "Fast and efficient model for most tasks",
+            "max_tokens": 4096,
+            "cost_per_token": 0.0000015,
+            "enabled": True
         },
         {
             "id": "gpt-4",
@@ -550,7 +561,13 @@ def get_mock_models():
             "type": "chat",
             "context_length": 8192,
             "available": True,
-            "default": False
+            "default": False,
+            "created": current_time,
+            "updated": current_time,
+            "description": "Most capable model for complex tasks",
+            "max_tokens": 8192,
+            "cost_per_token": 0.00003,
+            "enabled": True
         },
         {
             "id": "gpt-4-turbo",
@@ -559,7 +576,13 @@ def get_mock_models():
             "type": "chat",
             "context_length": 128000,
             "available": True,
-            "default": False
+            "default": False,
+            "created": current_time,
+            "updated": current_time,
+            "description": "Latest GPT-4 with larger context window",
+            "max_tokens": 128000,
+            "cost_per_token": 0.00001,
+            "enabled": True
         },
         {
             "id": "claude-3-sonnet",
@@ -568,7 +591,13 @@ def get_mock_models():
             "type": "chat",
             "context_length": 200000,
             "available": True,
-            "default": False
+            "default": False,
+            "created": current_time,
+            "updated": current_time,
+            "description": "Balanced model for analysis and creativity",
+            "max_tokens": 200000,
+            "cost_per_token": 0.000015,
+            "enabled": True
         },
         {
             "id": "claude-3-haiku",
@@ -577,7 +606,13 @@ def get_mock_models():
             "type": "chat",
             "context_length": 200000,
             "available": True,
-            "default": False
+            "default": False,
+            "created": current_time,
+            "updated": current_time,
+            "description": "Fast and efficient Claude model",
+            "max_tokens": 200000,
+            "cost_per_token": 0.00000025,
+            "enabled": True
         },
         {
             "id": "gemini-pro",
@@ -586,7 +621,13 @@ def get_mock_models():
             "type": "chat",
             "context_length": 32768,
             "available": True,
-            "default": False
+            "default": False,
+            "created": current_time,
+            "updated": current_time,
+            "description": "Google's advanced multimodal model",
+            "max_tokens": 32768,
+            "cost_per_token": 0.000001,
+            "enabled": True
         }
     ]
 
