@@ -9,11 +9,42 @@ echo "=========================================="
 
 # Read configuration
 echo "⚙️ Reading database configuration..."
-DB_HOST=$(bashio::services "postgres" "host")
-DB_PORT=$(bashio::services "postgres" "port")
-DB_USERNAME=$(bashio::services "postgres" "username")
-DB_PASSWORD=$(bashio::services "postgres" "password")
-DB_DATABASE="open_notebook"
+
+# Try to get PostgreSQL configuration from services first, then fallback to manual config
+if bashio::services.available "postgres"; then
+    echo "📡 Using PostgreSQL service configuration..."
+    DB_HOST=$(bashio::services "postgres" "host")
+    DB_PORT=$(bashio::services "postgres" "port")
+    DB_USERNAME=$(bashio::services "postgres" "username")
+    DB_PASSWORD=$(bashio::services "postgres" "password")
+else
+    echo "📝 Using manual PostgreSQL configuration..."
+    DB_HOST=$(bashio::config 'postgres_host' 'localhost')
+    DB_PORT=$(bashio::config 'postgres_port' '5432')
+    DB_USERNAME=$(bashio::config 'postgres_user' 'postgres')
+    DB_PASSWORD=$(bashio::config 'postgres_password' '')
+fi
+
+DB_DATABASE=$(bashio::config 'postgres_database' 'open_notebook')
+
+# Validate configuration
+if [ -z "$DB_HOST" ] || [ -z "$DB_USERNAME" ] || [ -z "$DB_PASSWORD" ]; then
+    echo "❌ PostgreSQL configuration incomplete!"
+    echo "   Host: $DB_HOST"
+    echo "   Port: $DB_PORT"
+    echo "   Username: $DB_USERNAME"
+    echo "   Password: $([ -n "$DB_PASSWORD" ] && echo "***" || echo "NOT SET")"
+    echo ""
+    echo "🔧 Please configure PostgreSQL in the addon options:"
+    echo "   - postgres_host: Your PostgreSQL server hostname"
+    echo "   - postgres_port: PostgreSQL port (default: 5432)"
+    echo "   - postgres_user: Database username"
+    echo "   - postgres_password: Database password"
+    echo "   - postgres_database: Database name (default: open_notebook)"
+    echo ""
+    echo "💡 Or install and configure the PostgreSQL addon from Home Assistant"
+    exit 1
+fi
 
 echo "⚙️ Reading application configuration..."
 OPENAI_API_KEY=$(bashio::config 'openai_api_key' '')
