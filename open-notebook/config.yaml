@@ -1,5 +1,5 @@
 name: Open Notebook
-version: "3.2.1"
+version: "3.2.2"
 slug: open_notebook
 description: "Pure interface to original Open Notebook - PostgreSQL compatible"
 url: https://github.com/FernandoWahl/ha-addons
