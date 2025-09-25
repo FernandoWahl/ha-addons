@@ -1,0 +1,19 @@
+configuration:
+  database_url:
+    name: URL do Banco de Dados
+    description: String de conexão PostgreSQL (ex: postgresql://user:pass@host:5432/db)
+  openai_api_key:
+    name: Chave API OpenAI
+    description: Chave da API OpenAI para funcionalidades de IA (opcional)
+  anthropic_api_key:
+    name: Chave API Anthropic
+    description: Chave da API Anthropic/Claude para funcionalidades de IA (opcional)
+  groq_api_key:
+    name: Chave API Groq
+    description: Chave da API Groq para funcionalidades de IA (opcional)
+  debug:
+    name: Modo Debug
+    description: Ativar logs detalhados para depuração
+  log_level:
+    name: Nível de Log
+    description: Nível de detalhamento dos logs

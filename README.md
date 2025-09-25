@@ -10,7 +10,7 @@
 ![Supports armv7 Architecture][armv7-shield]
 ![Supports i386 Architecture][i386-shield]
 
-Uma coleção de add-ons úteis para o Home Assistant, incluindo processamento de imagens e ferramentas de pesquisa com IA.
+Uma coleção de add-ons úteis para o Home Assistant, incluindo processamento de imagens.
 
 ## Add-ons Disponíveis
 
@@ -24,17 +24,18 @@ Um addon que fornece uma API HTTP para combinar até 4 imagens em uma única ima
 - ✅ Acesse via API REST
 - ✅ Suporte a múltiplos formatos de imagem
 
-### 📚 Open Notebook
-Uma alternativa open source e focada em privacidade ao Google Notebook LM para pesquisa e anotações.
+### 📝 Blinko
+Aplicação de anotações com IA para captura rápida de pensamentos e ideias.
 
 **Funcionalidades:**
-- 🔒 **Controle seus dados** - Mantenha sua pesquisa privada e segura
-- 🧠 **Insights com IA** - Obtenha resumos e análises inteligentes
-- 📚 **Múltiplas fontes** - Importe PDFs, arquivos de texto, conteúdo web e podcasts
-- 🎙️ **Integração com podcasts** - Transcreva e analise episódios de podcast
-- 💬 **Chat interativo** - Faça perguntas sobre seus materiais de pesquisa
-- 🔍 **Busca inteligente** - Encontre informações relevantes em todas as suas fontes
-- 📝 **Anotações** - Crie e organize seus pensamentos e insights
+- 🤖 IA integrada para busca semântica (RAG)
+- 📝 Editor rico com Markdown
+- 🏷️ Sistema de tags inteligente
+- 📎 Anexos (imagens, áudio, arquivos)
+- 🔍 Busca avançada com embeddings
+- 💬 Chat com IA sobre suas notas
+- 📊 Analytics e visualizações
+- 🎙️ Gravação de áudio com transcrição
 
 ## Instalação
 
@@ -63,15 +64,12 @@ cell_height: 300       # Altura da célula (200-600px)
 timeout: 10           # Timeout de download (5-30s)
 ```
 
-### Open Notebook
+### Blinko
 ```yaml
-# Configure pelo menos um provedor de IA
-openai_api_key: "sua-chave-openai"
-anthropic_api_key: "sua-chave-anthropic"
-groq_api_key: "sua-chave-groq"
-
-# Configurações básicas
-database_url: "memory"
+database_url: "postgresql://blinko:blinko@localhost:5432/blinko"
+openai_api_key: ""     # Chave OpenAI (opcional)
+anthropic_api_key: ""  # Chave Anthropic (opcional)
+groq_api_key: ""       # Chave Groq (opcional)
 debug: false
 log_level: "INFO"
 ```
@@ -86,13 +84,6 @@ curl -X POST http://homeassistant.local:5000/combine \
   -d '{"urls": ["https://example.com/image1.jpg", "https://example.com/image2.jpg"]}' \
   --output combined.jpg
 ```
-
-### Open Notebook
-1. Acesse a interface web através do botão "Open Web UI"
-2. Configure seus modelos de IA na página de Modelos
-3. Adicione fontes (documentos, URLs, podcasts)
-4. Crie notebooks para organizar sua pesquisa
-5. Use o chat para fazer perguntas sobre seus materiais
 
 ## Integração com Home Assistant
 
@@ -125,7 +116,7 @@ rest_command:
 ## Suporte
 
 - [Documentação do Image Combiner](image-combiner/DOCS.md)
-- [Documentação do Open Notebook](open-notebook/DOCS.md)
+- [Documentação do Blinko](blinko/DOCS.md)
 - [Changelog](CHANGELOG.md)
 - [Issues no GitHub][issues]
 

@@ -1,0 +1,19 @@
+configuration:
+  database_url:
+    name: Database URL
+    description: PostgreSQL connection string (e.g., postgresql://user:pass@host:5432/db)
+  openai_api_key:
+    name: OpenAI API Key
+    description: OpenAI API key for AI features (optional)
+  anthropic_api_key:
+    name: Anthropic API Key
+    description: Anthropic/Claude API key for AI features (optional)
+  groq_api_key:
+    name: Groq API Key
+    description: Groq API key for AI features (optional)
+  debug:
+    name: Debug Mode
+    description: Enable detailed logging for debugging
+  log_level:
+    name: Log Level
+    description: Level of detail for logging output

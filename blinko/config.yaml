@@ -1,0 +1,37 @@
+name: Blinko
+version: "1.6.2"
+slug: blinko
+description: AI-powered card note-taking application with semantic search and privacy focus
+url: https://github.com/FernandoWahl/ha-addons
+arch:
+  - armhf
+  - armv7
+  - aarch64
+  - amd64
+  - i386
+startup: services
+boot: auto
+init: false
+ports:
+  3000/tcp: 3000
+ports_description:
+  3000/tcp: Blinko web interface
+webui: http://[HOST]:[PORT:3000]
+panel_icon: mdi:notebook-outline
+panel_title: Blinko
+options:
+  database_url: "postgresql://blinko:blinko@localhost:5432/blinko"
+  openai_api_key: ""
+  anthropic_api_key: ""
+  groq_api_key: ""
+  debug: false
+  log_level: "INFO"
+schema:
+  database_url: str
+  openai_api_key: str?
+  anthropic_api_key: str?
+  groq_api_key: str?
+  debug: bool
+  log_level: list(DEBUG|INFO|WARN|ERROR)
+services:
+  - postgres:15-alpine
