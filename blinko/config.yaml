@@ -20,7 +20,7 @@ webui: http://[HOST]:[PORT:3000]
 panel_icon: mdi:notebook-outline
 panel_title: Blinko
 options:
-  database_url: "postgresql://blinko:blinko@localhost:5432/blinko"
+  database_url: "file:/data/blinko.db"
   openai_api_key: ""
   anthropic_api_key: ""
   groq_api_key: ""
@@ -33,5 +33,3 @@ schema:
   groq_api_key: str?
   debug: bool
   log_level: list(DEBUG|INFO|WARN|ERROR)
-services:
-  - postgres:15-alpine
