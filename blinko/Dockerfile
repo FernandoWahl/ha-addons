@@ -10,7 +10,9 @@ RUN apk add --no-cache \
     python3 \
     make \
     g++ \
-    sqlite
+    sqlite \
+    postgresql-client \
+    openssl
 
 # Install Bun
 RUN curl -fsSL https://bun.sh/install | bash

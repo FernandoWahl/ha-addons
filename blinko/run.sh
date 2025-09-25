@@ -39,6 +39,10 @@ bun install
 bashio::log.info "Generating Prisma client..."
 bun run prisma:generate
 
+# Reset database if P3005 error occurs
+bashio::log.info "Resetting database to avoid P3005 error..."
+cd prisma && npx prisma migrate reset --force --skip-seed || true
+
 # Run database migrations
 bashio::log.info "Running database migrations..."
 bun run prisma:migrate:deploy
