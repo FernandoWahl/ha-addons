@@ -18,8 +18,9 @@ RUN apk add --no-cache \
 RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:$PATH"
 
-# Set environment
+# Set environment with memory limits
 ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=1024"
 WORKDIR /app
 
 # Copy run script

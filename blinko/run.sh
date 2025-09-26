@@ -8,7 +8,7 @@ GROQ_API_KEY=$(bashio::config 'groq_api_key')
 DEBUG=$(bashio::config 'debug')
 LOG_LEVEL=$(bashio::config 'log_level')
 
-# Set environment variables
+# Set environment variables with memory optimization
 export DATABASE_URL="$DATABASE_URL"
 export OPENAI_API_KEY="$OPENAI_API_KEY"
 export ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY"
@@ -16,6 +16,7 @@ export GROQ_API_KEY="$GROQ_API_KEY"
 export DEBUG="$DEBUG"
 export LOG_LEVEL="$LOG_LEVEL"
 export NODE_ENV=production
+export NODE_OPTIONS="--max-old-space-size=1024"
 
 bashio::log.info "Starting Blinko add-on..."
 
@@ -47,9 +48,9 @@ cd prisma && npx prisma migrate reset --force --skip-seed || true
 bashio::log.info "Running database migrations..."
 bun run prisma:migrate:deploy
 
-# Build the application
-bashio::log.info "Building Blinko..."
-bun run build:web
+# Build with memory optimization
+bashio::log.info "Building Blinko with memory optimization..."
+NODE_OPTIONS="--max-old-space-size=1024" bun run build:web
 
 # Start the application
 bashio::log.info "Starting Blinko server..."

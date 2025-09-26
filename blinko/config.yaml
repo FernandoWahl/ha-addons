@@ -1,5 +1,5 @@
 name: Blinko
-version: "1.6.2"
+version: "1.0.0"
 slug: blinko
 description: AI-powered card note-taking application with semantic search and privacy focus
 url: https://github.com/FernandoWahl/ha-addons
